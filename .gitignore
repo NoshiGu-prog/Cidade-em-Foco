@@ -1,0 +1,23 @@
+# Dependências
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Sistema/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
