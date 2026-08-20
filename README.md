@@ -6,9 +6,7 @@ Aplicativo de ajuda ambiental para registro e gestão inteligente de ocorrência
 
 - Gustavo Brandão
 - Eduarda Carvalho
-- Eduardo Cavalli
 - Mere Helen Bispo
-- Carla Regina Hentschel
 
 ## Objetivo
 
