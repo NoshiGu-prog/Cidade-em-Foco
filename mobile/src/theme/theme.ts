@@ -4,6 +4,8 @@ export const colors = {
   background: "#e6f1f1",
   brandBlue: "#2a62a2",
   brandGreen: "#50924d",
+  inputBackground: "#fbfcfc",
+  checkboxFontColor: "#737373",
 } as const;
 
 const fontConfig = {

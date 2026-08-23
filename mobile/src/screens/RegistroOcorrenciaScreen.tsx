@@ -1,9 +1,9 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Button, Switch, Text, TextInput } from 'react-native-paper';
+import React from "react";
+import { View } from "react-native";
+import { Button, Switch, Text, TextInput } from "react-native-paper";
 
 export function RegistroOcorrenciaScreen() {
-  const [descricao, setDescricao] = React.useState('');
+  const [descricao, setDescricao] = React.useState("");
   const [perigosa, setPerigosa] = React.useState(false);
 
   return (
@@ -26,7 +26,13 @@ export function RegistroOcorrenciaScreen() {
         numberOfLines={5}
       />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Text>Ocorrência perigosa</Text>
         <Switch value={perigosa} onValueChange={setPerigosa} />
       </View>

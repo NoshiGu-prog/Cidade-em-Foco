@@ -1,10 +1,19 @@
-import { Image } from "expo-image";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
 import { View } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
+import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
 
+type LoginNavigationProp = NativeStackNavigationProp<
+  { Login: undefined; Cadastro: undefined },
+  "Login"
+>;
+
 export function LoginScreen() {
+  const navigation = useNavigation<LoginNavigationProp>();
+
   const [email, setEmail] = React.useState("");
   const [senha, setSenha] = React.useState("");
 
@@ -17,56 +26,7 @@ export function LoginScreen() {
         padding: 30,
       }}
     >
-      <View
-        style={{
-          alignItems: "center",
-        }}
-      >
-        <Image
-          source={require("../assets/images/logo_cidade_em_foco.png")}
-          contentFit="contain"
-          style={{ width: "100%", height: 250 }}
-        />
-        <View
-          style={{
-            flexDirection: "row",
-            display: "flex",
-            gap: 6,
-            marginTop: -60,
-            justifyContent: "center",
-            alignItems: "baseline",
-          }}
-        >
-          <Text
-            style={{
-              fontWeight: "bold",
-              color: colors.brandBlue,
-              fontSize: 30,
-            }}
-          >
-            Cidade
-          </Text>
-          <Text
-            style={{
-              fontWeight: "100",
-              color: colors.brandGreen,
-              fontSize: 25,
-            }}
-          >
-            em
-          </Text>
-          <Text
-            style={{
-              fontWeight: "900",
-              color: colors.brandGreen,
-              fontSize: 30,
-            }}
-          >
-            Foco
-          </Text>
-        </View>
-        s
-      </View>
+      <LogoWithText text1="Cidade" text2="em" text3="Foco" />
       <View
         style={{
           flexDirection: "column",
@@ -95,7 +55,7 @@ export function LoginScreen() {
       <Button mode="contained" onPress={() => {}}>
         Entrar
       </Button>
-      <Button mode="text" onPress={() => {}}>
+      <Button mode="text" onPress={() => navigation.navigate("Cadastro")}>
         Criar conta
       </Button>
     </View>
