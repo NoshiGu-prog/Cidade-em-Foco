@@ -1,99 +1,88 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft, Eye } from "lucide-react-native/icons";
-import React from "react";
+import { ArrowLeft } from "lucide-react-native/icons";
+import { FormProvider, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
-import { Button, TextInput } from "react-native-paper";
+import { Button } from "react-native-paper";
 import { InputCheckbox } from "../components/inputs/CheckboxInput";
+import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
+import { cadastroSchema, type CadastroFormData } from "../validation/schemas";
 
 export function CadastroScreen() {
   const navigation = useNavigation();
+  const form = useForm<CadastroFormData>({
+    resolver: zodResolver(cadastroSchema),
+    defaultValues: {
+      nome: "",
+      cpf: "",
+      cidade: "",
+      email: "",
+      senha: "",
+      confirmarSenha: "",
+      termos: false,
+    },
+  });
 
-  const [nome, setNome] = React.useState("");
-  const [cpf, setCpf] = React.useState("");
-  const [cidade, setCidade] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [senha, setSenha] = React.useState("");
+  const onSubmit = (data: CadastroFormData) => {
+    console.log("Cadastro válido", data);
+  };
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        padding: 24,
-        gap: 16,
-        flexGrow: 1,
-        backgroundColor: colors.background,
-      }}
-    >
-      <Button
-        mode="text"
-        onPress={() => navigation.navigate("Login" as never)}
-        style={{
-          alignSelf: "flex-start",
+    <FormProvider {...form}>
+      <ScrollView
+        contentContainerStyle={{
+          padding: 24,
+          gap: 16,
+          flexGrow: 1,
+          backgroundColor: colors.background,
         }}
-        icon={({ color, size }) => <ArrowLeft color={color} size={size} />}
       >
-        Voltar para login
-      </Button>
-      <View style={{ flex: 1, gap: 16, justifyContent: "center" }}>
-        <LogoWithText text1="Crie" text2="sua" text3="Conta" />
-        <View
-          style={{
-            flexDirection: "column",
-            width: "100%",
-            display: "flex",
-            gap: 20,
-          }}
+        <Button
+          mode="text"
+          onPress={() => navigation.navigate("Login" as never)}
+          style={{ alignSelf: "flex-start" }}
+          icon={({ color, size }) => <ArrowLeft color={color} size={size} />}
         >
-          <InputText
-            label="Nome completo"
-            value={nome}
-            onChangeText={setNome}
-          />
-          <InputText
-            label="CPF"
-            value={cpf}
-            onChangeText={setCpf}
-            keyboardType="numeric"
-          />
-          <InputText label="Cidade" value={cidade} onChangeText={setCidade} />
-          <InputText
-            label="E-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <InputText
-            label="Senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-            right={
-              <TextInput.Icon
-                icon={({ color, size }) => <Eye color={color} size={size} />}
-              />
-            }
-          />
-          <InputCheckbox
-            label="Declaro que as informações fornecidas são verdadeiras"
-            status="indeterminate"
-          />
-          <Button
-            mode="contained"
-            style={{ height: 48, justifyContent: "center" }}
-            labelStyle={{
-              fontSize: 20,
-              fontWeight: "bold",
-              letterSpacing: 1.5,
-            }}
-            onPress={() => {}}
-          >
-            Criar conta
-          </Button>
+          Voltar para login
+        </Button>
+        <View style={{ flex: 1, gap: 16, justifyContent: "center" }}>
+          <LogoWithText text1="Crie" text2="sua" text3="Conta" />
+          <View style={{ width: "100%", gap: 20 }}>
+            <InputText name="nome" label="Nome completo" />
+            <InputText name="cpf" label="CPF" keyboardType="numeric" />
+            <InputText name="cidade" label="Cidade" />
+            <InputText
+              name="email"
+              label="E-mail"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <InputPassword name="senha" label="Senha" />
+            <InputPassword name="confirmarSenha" label="Confirme sua senha" />
+            <InputCheckbox
+              name="termos"
+              label="Declaro que as informações fornecidas são verdadeiras"
+            />
+            <Button
+              mode="contained"
+              style={{ height: 48, justifyContent: "center" }}
+              labelStyle={{
+                fontSize: 20,
+                fontWeight: "bold",
+                letterSpacing: 1.5,
+              }}
+              onPress={form.handleSubmit(onSubmit, (err) =>
+                console.log("erro", err),
+              )}
+            >
+              Criar conta
+            </Button>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </FormProvider>
   );
 }
