@@ -99,11 +99,7 @@ export const InputMask = (props: InputMaskProps) => {
             ]}
             underlineStyle={{ display: "none" }}
           />
-          <HelperText
-            type="error"
-            visible={!!fieldState.error?.message}
-            style={{ padding: 0 }}
-          >
+          <HelperText type="error" visible={!!fieldState.error?.message}>
             {fieldState.error?.message}
           </HelperText>
         </View>
