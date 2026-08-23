@@ -1,6 +1,6 @@
 import { Controller, useFormContext } from "react-hook-form";
-import { Text, View } from "react-native";
-import { Checkbox, CheckboxProps } from "react-native-paper";
+import { Pressable, Text, View } from "react-native";
+import { CheckboxProps, HelperText } from "react-native-paper";
 import { colors } from "../../theme/theme";
 
 type InputCheckboxProps = Omit<CheckboxProps, "status" | "onPress"> & {
@@ -19,32 +19,75 @@ export const InputCheckbox = ({
     <Controller
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Checkbox
-            {...props}
-            status={field.value ? "checked" : "unchecked"}
-            onPress={() => field.onChange(!field.value)}
-            color={props.color ?? colors.brandBlue}
-            uncheckedColor={props.uncheckedColor ?? colors.brandBlue}
-          />
+      render={({ field, fieldState }) => {
+        const checked = !!field.value;
 
-          {label && (
-            <Text
+        return (
+          <View>
+            <Pressable
+              onPress={() => field.onChange(!checked)}
               style={{
-                color: colors.checkboxFontColor,
-                fontSize: 16,
-                fontWeight: "bold",
+                flexDirection: "row",
+                alignItems: "center",
+                width: "100%",
+                paddingVertical: 4,
               }}
             >
-              {label}
-            </Text>
-          )}
-          {fieldState.error?.message && (
-            <Text style={{ color: "#ba1a1a" }}>{fieldState.error.message}</Text>
-          )}
-        </View>
-      )}
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: fieldState.error ? "red" : colors.brandBlue,
+                  backgroundColor: checked ? colors.brandBlue : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {checked && (
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 17,
+                      fontWeight: "bold",
+                      lineHeight: 20,
+                    }}
+                  >
+                    ✓
+                  </Text>
+                )}
+              </View>
+
+              {label && (
+                <Text
+                  style={{
+                    marginLeft: 10,
+                    color: colors.checkboxFontColor,
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    flex: 1,
+                  }}
+                >
+                  {label}
+                </Text>
+              )}
+            </Pressable>
+
+            {fieldState.error?.message && (
+              <HelperText
+                type="error"
+                style={{
+                  marginTop: -2,
+                  marginLeft: 24,
+                }}
+              >
+                {fieldState.error.message}
+              </HelperText>
+            )}
+          </View>
+        );
+      }}
     />
   );
 };

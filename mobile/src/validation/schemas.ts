@@ -1,3 +1,4 @@
+import { cpf } from "cpf-cnpj-validator";
 import { z } from "zod";
 
 export const loginSchema = z.object({
@@ -8,7 +9,13 @@ export const loginSchema = z.object({
 export const cadastroSchema = z
   .object({
     nome: z.string().trim().min(3, "Informe seu nome completo"),
-    cpf: z.string().trim().min(11, "Informe um CPF válido"),
+    cpf: z
+      .string()
+      .trim()
+      .min(1, "Informe seu CPF")
+      .refine((value) => cpf.isValid(value), {
+        message: "Informe um CPF válido",
+      }),
     cidade: z.string().trim().min(1, "Informe sua cidade"),
     email: z.string().min(1, "Informe um e-mail válido"),
     senha: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),

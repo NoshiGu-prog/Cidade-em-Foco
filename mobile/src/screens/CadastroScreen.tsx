@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
 import { Button } from "react-native-paper";
 import { InputCheckbox } from "../components/inputs/CheckboxInput";
+import { cpfMask, InputMask } from "../components/inputs/MaskInput";
 import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
@@ -48,11 +49,17 @@ export function CadastroScreen() {
         >
           Voltar para login
         </Button>
-        <View style={{ flex: 1, gap: 16, justifyContent: "center" }}>
+        <View
+          style={{
+            flex: 1,
+            gap: 16,
+            justifyContent: "center",
+          }}
+        >
           <LogoWithText text1="Crie" text2="sua" text3="Conta" />
-          <View style={{ width: "100%", gap: 20 }}>
+          <View style={{ width: "100%", gap: 8 }}>
             <InputText name="nome" label="Nome completo" />
-            <InputText name="cpf" label="CPF" keyboardType="numeric" />
+            <InputMask name="cpf" label="CPF" mask={cpfMask} />
             <InputText name="cidade" label="Cidade" />
             <InputText
               name="email"
