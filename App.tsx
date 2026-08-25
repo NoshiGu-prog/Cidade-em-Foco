@@ -7,6 +7,8 @@ import { createStaticNavigation } from "@react-navigation/native";
 import { CadastroScreen } from "./src/screens/CadastroScreen";
 import { theme } from "./src/theme/theme";
 
+import { RegistroOcorrenciaScreen } from "./src/screens/RegistroOcorrenciaScreen";
+
 const RootStack = createNativeStackNavigator({
   initialRouteName: "Login",
   screens: {
@@ -20,6 +22,13 @@ const RootStack = createNativeStackNavigator({
         title: "Criar Conta",
         animation: "fade_from_bottom",
         animationDuration: 200,
+        header: () => <></>,
+      },
+    },
+    RegistroOcorrencia: {
+      screen: RegistroOcorrenciaScreen,
+      options: {
+        title: "Registrar Ocorrência",
         header: () => <></>,
       },
     },
