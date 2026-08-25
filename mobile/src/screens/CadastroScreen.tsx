@@ -1,9 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation } from "@react-navigation/native";
+import {
+  AtSign,
+  Building2,
+  IdCard,
+  KeyRound,
+  UserRound,
+} from "lucide-react-native";
 import { ArrowLeft } from "lucide-react-native/icons";
 import { FormProvider, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
 import { InputCheckbox } from "../components/inputs/CheckboxInput";
 import { cpfMask, InputMask } from "../components/inputs/MaskInput";
 import { InputPassword } from "../components/inputs/PasswordInput";
@@ -58,17 +65,63 @@ export function CadastroScreen() {
         >
           <LogoWithText text1="Crie" text2="sua" text3="Conta" />
           <View style={{ width: "100%", gap: 8 }}>
-            <InputText name="nome" label="Nome completo" />
-            <InputMask name="cpf" label="CPF" mask={cpfMask} />
-            <InputText name="cidade" label="Cidade" />
+            <InputText
+              name="nome"
+              label="Nome completo"
+              left={
+                <TextInput.Icon
+                  icon={() => <UserRound color={colors.brandBlue} />}
+                />
+              }
+            />
+            <InputMask
+              name="cpf"
+              label="CPF"
+              mask={cpfMask}
+              left={
+                <TextInput.Icon
+                  icon={() => <IdCard color={colors.brandBlue} />}
+                />
+              }
+            />
+            <InputText
+              name="cidade"
+              label="Cidade"
+              left={
+                <TextInput.Icon
+                  icon={() => <Building2 color={colors.brandBlue} />}
+                />
+              }
+            />
             <InputText
               name="email"
               label="E-mail"
               keyboardType="email-address"
               autoCapitalize="none"
+              left={
+                <TextInput.Icon
+                  icon={() => <AtSign color={colors.brandBlue} />}
+                />
+              }
             />
-            <InputPassword name="senha" label="Senha" />
-            <InputPassword name="confirmarSenha" label="Confirme sua senha" />
+            <InputPassword
+              name="senha"
+              label="Senha"
+              left={
+                <TextInput.Icon
+                  icon={() => <KeyRound color={colors.brandBlue} />}
+                />
+              }
+            />
+            <InputPassword
+              name="confirmarSenha"
+              label="Confirme sua senha"
+              left={
+                <TextInput.Icon
+                  icon={() => <KeyRound color={colors.brandBlue} />}
+                />
+              }
+            />
             <InputCheckbox
               name="termos"
               label="Declaro que as informações fornecidas são verdadeiras"
