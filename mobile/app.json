@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Cidade em Foco",
+    "slug": "cidade-em-foco",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "expo-font",
+      "expo-image"
+    ]
+  }
+}

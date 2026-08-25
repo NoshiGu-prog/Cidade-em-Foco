@@ -2,20 +2,13 @@
 
 A aplicação será desenvolvida com React Native, Expo e TypeScript, utilizando React Native Paper para os componentes visuais.
 
-## Criar o projeto Expo localmente
+## Instalar o projeto localmente
 
-Na raiz do repositório, execute:
-
-```bash
-npx create-expo-app@latest mobile-app --template blank-typescript
-```
-
-Depois instale o React Native Paper:
+O projeto Expo já está configurado nesta pasta. Na raiz do repositório, execute:
 
 ```bash
-cd mobile-app
-npm install react-native-paper
-npx expo install react-native-safe-area-context react-native-vector-icons
+cd mobile
+npm install
 ```
 
 ## Executar
