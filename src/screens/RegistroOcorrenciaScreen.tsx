@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { View } from "react-native";
-import { Button, Switch, Text } from "react-native-paper";
+import { Button, Snackbar, Switch, Text } from "react-native-paper";
 import { InputText } from "../components/inputs/TextInput";
 import {
   ocorrenciaSchema,
@@ -9,6 +10,7 @@ import {
 } from "../validation/schemas";
 
 export function RegistroOcorrenciaScreen() {
+  const [mensagemVisivel, setMensagemVisivel] = useState(false);
   const form = useForm<OcorrenciaFormData>({
     resolver: zodResolver(ocorrenciaSchema),
     defaultValues: { descricao: "", perigosa: false },
@@ -17,7 +19,8 @@ export function RegistroOcorrenciaScreen() {
 
   const onSubmit = (data: OcorrenciaFormData) => {
     console.log("Ocorrência válida", data);
-  };
+    setMensagemVisivel(true);
+};
 
   return (
     <FormProvider {...form}>
@@ -59,6 +62,14 @@ export function RegistroOcorrenciaScreen() {
         <Button mode="contained" onPress={form.handleSubmit(onSubmit)}>
           Registrar ocorrência
         </Button>
+
+        <Snackbar
+          visible={mensagemVisivel}
+          onDismiss={() => setMensagemVisivel(false)}
+          duration={3000}
+        >
+          Dados da ocorrência validados com sucesso!
+        </Snackbar>
       </View>
     </FormProvider>
   );
