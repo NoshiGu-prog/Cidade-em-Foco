@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { Image, View } from "react-native";
+import { Image, Platform, View } from "react-native";
 import { Button, Snackbar, Switch, Text } from "react-native-paper";
 import { InputText } from "../components/inputs/TextInput";
 import {
@@ -13,6 +13,7 @@ import {
 
 export function RegistroOcorrenciaScreen() {
   const [mensagemVisivel, setMensagemVisivel] = useState(false);
+  const [mensagem, setMensagem] = useState("");
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
     latitude: number;
@@ -20,6 +21,7 @@ export function RegistroOcorrenciaScreen() {
   } | null>(null);
   const [obtendoLocalizacao, setObtendoLocalizacao] = useState(false);
   const [erroLocalizacao, setErroLocalizacao] = useState<string | null>(null);
+  const [endereco, setEndereco] = useState<string | null>(null);
 
   const form = useForm<OcorrenciaFormData>({
     resolver: zodResolver(ocorrenciaSchema),
@@ -43,6 +45,64 @@ export function RegistroOcorrenciaScreen() {
     }
   };
 
+  const buscarEndereco = async (
+  latitude: number,
+  longitude: number,
+): Promise<string | null> => {
+  try {
+    if (Platform.OS === "web") {
+      const resposta = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+      );
+
+      const dados = await resposta.json();
+      const address = dados.address;
+
+      const rua =
+        address?.road ??
+        address?.pedestrian ??
+        address?.residential;
+
+      const bairro =
+        address?.suburb ??
+        address?.neighbourhood ??
+        address?.quarter;
+
+      const cidade =
+        address?.city ??
+        address?.town ??
+        address?.municipality ??
+        address?.village;
+
+      const partes = [rua, bairro, cidade].filter(Boolean);
+
+      return partes.length > 0 ? partes.join(", ") : dados.display_name ?? null;
+    }
+
+    const enderecos = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude,
+    });
+
+    if (enderecos.length === 0) {
+      return null;
+    }
+
+    const local = enderecos[0];
+
+    const partes = [
+      local.street,
+      local.district,
+      local.city,
+    ].filter(Boolean);
+
+    return partes.join(", ");
+  } catch (erro) {
+    console.log("Erro ao buscar endereço:", erro);
+    return null;
+  }
+};
+
   const obterLocalizacao = async () => {
   try {
     setObtendoLocalizacao(true);
@@ -59,28 +119,52 @@ export function RegistroOcorrenciaScreen() {
       accuracy: Location.Accuracy.Balanced,
     });
 
-    setLocalizacao({
-      latitude: posicao.coords.latitude,
-      longitude: posicao.coords.longitude,
-    });
-  } catch (erro) {
-    console.log("Erro ao obter localização:", erro);
-    setErroLocalizacao("Não foi possível obter a localização.");
-  } finally {
-    setObtendoLocalizacao(false);
-  }
-};
+  const latitude = posicao.coords.latitude;
+const longitude = posicao.coords.longitude;
 
-  const onSubmit = (data: OcorrenciaFormData) => {
-    console.log("Ocorrência válida", {
-      ...data,
-      fotoUri,
-      latitude: localizacao?.latitude ?? null,
-      longitude: localizacao?.longitude ?? null,
-    });
+setLocalizacao({
+  latitude,
+  longitude,
+});
 
-    setMensagemVisivel(true);
+const enderecoEncontrado = await buscarEndereco(
+  latitude,
+  longitude,
+);
+
+  setEndereco(enderecoEncontrado);
+    } catch (erro) {
+      console.log("Erro ao obter localização:", erro);
+      setErroLocalizacao("Não foi possível obter a localização.");
+    } finally {
+      setObtendoLocalizacao(false);
+    }
   };
+
+const onSubmit = (data: OcorrenciaFormData) => {
+  if (!fotoUri) {
+    setMensagem("Adicione uma foto antes de registrar a ocorrência.");
+    setMensagemVisivel(true);
+    return;
+  }
+
+  if (!localizacao) {
+    setMensagem("Obtenha a localização antes de registrar a ocorrência.");
+    setMensagemVisivel(true);
+    return;
+  }
+
+  console.log("Ocorrência válida", {
+    ...data,
+    fotoUri,
+    latitude: localizacao.latitude,
+    longitude: localizacao.longitude,
+    endereco,
+  });
+
+  setMensagem("Dados da ocorrência validados com sucesso!");
+  setMensagemVisivel(true);
+};
 
   return (
     <FormProvider {...form}>
@@ -117,10 +201,9 @@ export function RegistroOcorrenciaScreen() {
           {localizacao ? "Atualizar localização" : "Obter localização"}
         </Button>
         
-        {localizacao && (
+        {endereco && (
           <Text>
-            Latitude: {localizacao.latitude.toFixed(6)} | Longitude:{" "}
-            {localizacao.longitude.toFixed(6)}
+            Endereço Amproximado: {endereco}
           </Text>
         )}
         {erroLocalizacao && (
@@ -167,7 +250,7 @@ export function RegistroOcorrenciaScreen() {
           onDismiss={() => setMensagemVisivel(false)}
           duration={3000}
         >
-          Dados da ocorrência validados com sucesso!
+          {mensagem}
         </Snackbar>
       </View>
     </FormProvider>
