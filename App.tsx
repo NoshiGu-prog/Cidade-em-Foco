@@ -7,6 +7,7 @@ import { createStaticNavigation } from "@react-navigation/native";
 import { CadastroScreen } from "./src/screens/CadastroScreen";
 import { theme } from "./src/theme/theme";
 
+import { AppSnackbarProvider } from "./src/components/AppSnackbar";
 import { RegistroOcorrenciaScreen } from "./src/screens/RegistroOcorrenciaScreen";
 
 const RootStack = createNativeStackNavigator({
@@ -46,7 +47,9 @@ export default function App() {
 
   return (
     <PaperProvider theme={theme}>
-      <Navigation />
+      <AppSnackbarProvider>
+        <Navigation />
+      </AppSnackbarProvider>
     </PaperProvider>
   );
 }

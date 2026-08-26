@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { FormProvider, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { Button } from "react-native-paper";
@@ -8,19 +7,8 @@ import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
+import { LoginNavigationProp } from "../types/general";
 import { loginSchema, type LoginFormData } from "../validation/schemas";
-
-// ALTERADO:
-// Foi incluída a rota RegistroOcorrencia.
-// Antes existiam apenas Login e Cadastro.
-type LoginNavigationProp = NativeStackNavigationProp<
-  {
-    Login: undefined;
-    Cadastro: undefined;
-    RegistroOcorrencia: undefined; // NOVO
-  },
-  "Login"
->;
 
 export function LoginScreen() {
   const navigation = useNavigation<LoginNavigationProp>();
@@ -76,30 +64,21 @@ export function LoginScreen() {
             autoCapitalize="none"
           />
 
-          <InputPassword
-            name="senha"
-            label="Senha"
-          />
+          <InputPassword name="senha" label="Senha" />
         </View>
 
         {/* JÁ EXISTIA:
             Esse botão já chama a validação do formulário.
             Se o formulário estiver válido, executa onSubmit.
         */}
-        <Button
-          mode="contained"
-          onPress={form.handleSubmit(onSubmit)}
-        >
+        <Button mode="contained" onPress={form.handleSubmit(onSubmit)}>
           Entrar
         </Button>
 
         {/* JÁ EXISTIA:
             Continua navegando para a tela de cadastro.
         */}
-        <Button
-          mode="text"
-          onPress={() => navigation.navigate("Cadastro")}
-        >
+        <Button mode="text" onPress={() => navigation.navigate("Cadastro")}>
           Criar conta
         </Button>
       </View>
