@@ -1,21 +1,20 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
+import { Camera, MapPin } from "lucide-react-native";
+import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
-import { Camera, MapPin } from "lucide-react-native";
-import { colors } from "../theme/theme";
-import { Button, Snackbar, Switch, Text } from "react-native-paper";
+import { Button, Switch, Text } from "react-native-paper";
+import { useAppSnackbar } from "../components/AppSnackbar";
 import { InputText } from "../components/inputs/TextInput";
+import { colors } from "../theme/theme";
 import {
   ocorrenciaSchema,
   type OcorrenciaFormData,
 } from "../validation/schemas";
 
 export function RegistroOcorrenciaScreen() {
-  const [mensagemVisivel, setMensagemVisivel] = useState(false);
-  const [mensagem, setMensagem] = useState("");
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
     latitude: number;
@@ -34,6 +33,7 @@ export function RegistroOcorrenciaScreen() {
   });
 
   const { control } = form;
+  const { showSnackbar } = useAppSnackbar();
 
   const selecionarFoto = async () => {
     const resultado = await ImagePicker.launchImageLibraryAsync({
@@ -48,93 +48,84 @@ export function RegistroOcorrenciaScreen() {
   };
 
   const buscarEndereco = async (
-  latitude: number,
-  longitude: number,
-): Promise<string | null> => {
-  try {
-    if (Platform.OS === "web") {
-      const resposta = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-      );
+    latitude: number,
+    longitude: number,
+  ): Promise<string | null> => {
+    try {
+      if (Platform.OS === "web") {
+        const resposta = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+        );
 
-      const dados = await resposta.json();
-      const address = dados.address;
+        const dados = await resposta.json();
+        const address = dados.address;
 
-      const rua =
-        address?.road ??
-        address?.pedestrian ??
-        address?.residential;
+        const rua =
+          address?.road ?? address?.pedestrian ?? address?.residential;
 
-      const bairro =
-        address?.suburb ??
-        address?.neighbourhood ??
-        address?.quarter;
+        const bairro =
+          address?.suburb ?? address?.neighbourhood ?? address?.quarter;
 
-      const cidade =
-        address?.city ??
-        address?.town ??
-        address?.municipality ??
-        address?.village;
+        const cidade =
+          address?.city ??
+          address?.town ??
+          address?.municipality ??
+          address?.village;
 
-      const partes = [rua, bairro, cidade].filter(Boolean);
+        const partes = [rua, bairro, cidade].filter(Boolean);
 
-      return partes.length > 0 ? partes.join(", ") : dados.display_name ?? null;
-    }
+        return partes.length > 0
+          ? partes.join(", ")
+          : (dados.display_name ?? null);
+      }
 
-    const enderecos = await Location.reverseGeocodeAsync({
-      latitude,
-      longitude,
-    });
+      const enderecos = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
 
-    if (enderecos.length === 0) {
+      if (enderecos.length === 0) {
+        return null;
+      }
+
+      const local = enderecos[0];
+
+      const partes = [local.street, local.district, local.city].filter(Boolean);
+
+      return partes.join(", ");
+    } catch (erro) {
+      console.log("Erro ao buscar endereço:", erro);
       return null;
     }
-
-    const local = enderecos[0];
-
-    const partes = [
-      local.street,
-      local.district,
-      local.city,
-    ].filter(Boolean);
-
-    return partes.join(", ");
-  } catch (erro) {
-    console.log("Erro ao buscar endereço:", erro);
-    return null;
-  }
-};
+  };
 
   const obterLocalizacao = async () => {
-  try {
-    setObtendoLocalizacao(true);
-    setErroLocalizacao(null);
+    try {
+      setObtendoLocalizacao(true);
+      setErroLocalizacao(null);
 
-    const permissao = await Location.requestForegroundPermissionsAsync();
+      const permissao = await Location.requestForegroundPermissionsAsync();
 
-    if (permissao.status !== "granted") {
-      setErroLocalizacao("Permissão de localização não concedida.");
-      return;
-    }
+      if (permissao.status !== "granted") {
+        setErroLocalizacao("Permissão de localização não concedida.");
+        return;
+      }
 
-    const posicao = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
+      const posicao = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
 
-  const latitude = posicao.coords.latitude;
-const longitude = posicao.coords.longitude;
+      const latitude = posicao.coords.latitude;
+      const longitude = posicao.coords.longitude;
 
-setLocalizacao({
-  latitude,
-  longitude,
-});
+      setLocalizacao({
+        latitude,
+        longitude,
+      });
 
-const enderecoEncontrado = await buscarEndereco(
-  latitude,
-  longitude,
-);
+      const enderecoEncontrado = await buscarEndereco(latitude, longitude);
 
-  setEndereco(enderecoEncontrado);
+      setEndereco(enderecoEncontrado);
     } catch (erro) {
       console.log("Erro ao obter localização:", erro);
       setErroLocalizacao("Não foi possível obter a localização.");
@@ -143,180 +134,149 @@ const enderecoEncontrado = await buscarEndereco(
     }
   };
 
-const onSubmit = (data: OcorrenciaFormData) => {
-  if (!fotoUri) {
-    setMensagem("Adicione uma foto antes de registrar a ocorrência.");
-    setMensagemVisivel(true);
-    return;
-  }
+  const onSubmit = (data: OcorrenciaFormData) => {
+    if (!fotoUri) {
+      showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
+      return;
+    }
 
-  if (!localizacao) {
-    setMensagem("Obtenha a localização antes de registrar a ocorrência.");
-    setMensagemVisivel(true);
-    return;
-  }
+    if (!localizacao) {
+      showSnackbar("Obtenha a localização antes de registrar a ocorrência.");
+      return;
+    }
 
-  console.log("Ocorrência válida", {
-    ...data,
-    fotoUri,
-    latitude: localizacao.latitude,
-    longitude: localizacao.longitude,
-    endereco,
-  });
+    console.log("Ocorrência válida", {
+      ...data,
+      fotoUri,
+      latitude: localizacao.latitude,
+      longitude: localizacao.longitude,
+      endereco,
+    });
 
-  setMensagem("Dados da ocorrência validados com sucesso!");
-  setMensagemVisivel(true);
-};
+    showSnackbar("Dados da ocorrência validados com sucesso!");
+  };
 
-return (
-  <FormProvider {...form}>
-    <ScrollView
-      contentContainerStyle={styles.page}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.title}>
-            Nova ocorrência
-          </Text>
-
-          <Text style={styles.subtitle}>
-            Informe os dados do problema encontrado.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Foto da ocorrência
-          </Text>
-
-          <Button
-            mode="outlined"
-            onPress={selecionarFoto}
-            icon={({ color, size }) => (
-              <Camera color={color} size={size} />
-            )}
-          >
-            {fotoUri ? "Trocar foto" : "Adicionar foto"}
-          </Button>
-
-          {fotoUri && (
-            <Image
-              source={{ uri: fotoUri }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Localização
-          </Text>
-
-          <Button
-            mode="outlined"
-            onPress={obterLocalizacao}
-            loading={obtendoLocalizacao}
-            disabled={obtendoLocalizacao}
-            icon={({ color, size }) => (
-              <MapPin color={color} size={size} />
-            )}
-          >
-            {localizacao
-              ? "Atualizar localização"
-              : "Obter localização"}
-          </Button>
-
-          {endereco && (
-            <View style={styles.locationCard}>
-              <MapPin
-                color={colors.brandBlue}
-                size={22}
-              />
-
-              <View style={styles.locationText}>
-                <Text style={styles.locationLabel}>
-                  Endereço aproximado
-                </Text>
-
-                <Text>
-                  {endereco}
-                </Text>
-
-                {localizacao && (
-                  <Text style={styles.coordinates}>
-                    {localizacao.latitude.toFixed(6)},{" "}
-                    {localizacao.longitude.toFixed(6)}
-                  </Text>
-                )}
-              </View>
-            </View>
-          )}
-
-          {erroLocalizacao && (
-            <Text style={styles.errorText}>
-              {erroLocalizacao}
+  return (
+    <FormProvider {...form}>
+      <ScrollView
+        contentContainerStyle={styles.page}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text variant="headlineMedium" style={styles.title}>
+              Nova ocorrência
             </Text>
-          )}
-        </View>
 
-        <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Detalhes
-          </Text>
-
-          <InputText
-            name="descricao"
-            label="Descrição"
-            multiline
-            numberOfLines={5}
-          />
-
-          <View style={styles.dangerRow}>
-            <View>
-              <Text style={styles.dangerTitle}>
-                Ocorrência perigosa
-              </Text>
-
-              <Text style={styles.dangerDescription}>
-                Marque se houver risco para pessoas ou veículos.
-              </Text>
-            </View>
-
-            <Controller
-              control={control}
-              name="perigosa"
-              render={({ field }) => (
-                <Switch
-                  value={field.value}
-                  onValueChange={field.onChange}
-                />
-              )}
-            />
+            <Text style={styles.subtitle}>
+              Informe os dados do problema encontrado.
+            </Text>
           </View>
+
+          <View style={styles.section}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Foto da ocorrência
+            </Text>
+
+            <Button
+              mode="outlined"
+              onPress={selecionarFoto}
+              icon={({ color, size }) => <Camera color={color} size={size} />}
+            >
+              {fotoUri ? "Trocar foto" : "Adicionar foto"}
+            </Button>
+
+            {fotoUri && (
+              <Image
+                source={{ uri: fotoUri }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Localização
+            </Text>
+
+            <Button
+              mode="outlined"
+              onPress={obterLocalizacao}
+              loading={obtendoLocalizacao}
+              disabled={obtendoLocalizacao}
+              icon={({ color, size }) => <MapPin color={color} size={size} />}
+            >
+              {localizacao ? "Atualizar localização" : "Obter localização"}
+            </Button>
+
+            {endereco && (
+              <View style={styles.locationCard}>
+                <MapPin color={colors.brandBlue} size={22} />
+
+                <View style={styles.locationText}>
+                  <Text style={styles.locationLabel}>Endereço aproximado</Text>
+
+                  <Text>{endereco}</Text>
+
+                  {localizacao && (
+                    <Text style={styles.coordinates}>
+                      {localizacao.latitude.toFixed(6)},{" "}
+                      {localizacao.longitude.toFixed(6)}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {erroLocalizacao && (
+              <Text style={styles.errorText}>{erroLocalizacao}</Text>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Detalhes
+            </Text>
+
+            <InputText
+              name="descricao"
+              label="Descrição"
+              multiline
+              numberOfLines={5}
+            />
+
+            <View style={styles.dangerRow}>
+              <View>
+                <Text style={styles.dangerTitle}>Ocorrência perigosa</Text>
+
+                <Text style={styles.dangerDescription}>
+                  Marque se houver risco para pessoas ou veículos.
+                </Text>
+              </View>
+
+              <Controller
+                control={control}
+                name="perigosa"
+                render={({ field }) => (
+                  <Switch value={field.value} onValueChange={field.onChange} />
+                )}
+              />
+            </View>
+          </View>
+
+          <Button
+            mode="contained"
+            onPress={form.handleSubmit(onSubmit)}
+            contentStyle={styles.registerButtonContent}
+            labelStyle={styles.registerButtonLabel}
+          >
+            Registrar ocorrência
+          </Button>
         </View>
-
-        <Button
-          mode="contained"
-          onPress={form.handleSubmit(onSubmit)}
-          contentStyle={styles.registerButtonContent}
-          labelStyle={styles.registerButtonLabel}
-        >
-          Registrar ocorrência
-        </Button>
-
-        <Snackbar
-          visible={mensagemVisivel}
-          onDismiss={() => setMensagemVisivel(false)}
-          duration={3000}
-        >
-          {mensagem}
-        </Snackbar>
-      </View>
-    </ScrollView>
-  </FormProvider>
-);
+      </ScrollView>
+    </FormProvider>
+  );
 }
 
 const styles = StyleSheet.create({

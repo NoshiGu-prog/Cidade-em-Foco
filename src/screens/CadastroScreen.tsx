@@ -11,16 +11,20 @@ import { ArrowLeft } from "lucide-react-native/icons";
 import { FormProvider, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
+import { useAppSnackbar } from "../components/AppSnackbar";
 import { InputCheckbox } from "../components/inputs/CheckboxInput";
 import { cpfMask, InputMask } from "../components/inputs/MaskInput";
 import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
+import { LoginNavigationProp } from "../types/general";
 import { cadastroSchema, type CadastroFormData } from "../validation/schemas";
 
 export function CadastroScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<LoginNavigationProp>();
+  const { showSnackbar } = useAppSnackbar();
+
   const form = useForm<CadastroFormData>({
     resolver: zodResolver(cadastroSchema),
     defaultValues: {
@@ -36,6 +40,10 @@ export function CadastroScreen() {
 
   const onSubmit = (data: CadastroFormData) => {
     console.log("Cadastro válido", data);
+    showSnackbar("Registro criado com sucesso!");
+    setTimeout(() => {
+      navigation.navigate("RegistroOcorrencia");
+    }, 1000);
   };
 
   return (
