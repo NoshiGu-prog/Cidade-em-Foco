@@ -19,7 +19,7 @@ import { colors } from "../theme/theme";
 import { useAppNavigation } from "../types/general";
 import { cadastroSchema, type CadastroFormData } from "../validation/schemas";
 
-export function CadastroScreen() {
+export function FeedMapaScreen() {
   const navigation = useAppNavigation();
   const { showSnackbar } = useAppSnackbar();
 

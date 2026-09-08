@@ -8,7 +8,7 @@ import { CadastroScreen } from "./src/screens/CadastroScreen";
 import { theme } from "./src/theme/theme";
 
 import { AppSnackbarProvider } from "./src/components/AppSnackbar";
-import { RegistroOcorrenciaScreen } from "./src/screens/RegistroOcorrenciaScreen";
+import MenuBar from "./src/components/MenuBar";
 
 const RootStack = createNativeStackNavigator({
   initialRouteName: "Login",
@@ -26,10 +26,10 @@ const RootStack = createNativeStackNavigator({
         header: () => <></>,
       },
     },
-    RegistroOcorrencia: {
-      screen: RegistroOcorrenciaScreen,
+    Menu: {
+      screen: MenuBar,
       options: {
-        title: "Registrar Ocorrência",
+        title: "Menu",
         header: () => <></>,
       },
     },

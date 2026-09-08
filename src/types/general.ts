@@ -1,10 +1,18 @@
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import { type NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-export type LoginNavigationProp = NativeStackNavigationProp<
-  {
-    Login: undefined;
-    Cadastro: undefined;
-    RegistroOcorrencia: undefined; // NOVO
-  },
-  "Login"
->;
+export type RootStackParamList = {
+  Login: undefined;
+  Cadastro: undefined;
+  Menu: undefined;
+  RegistroOcorrencia: undefined;
+  FeedMapa: undefined;
+};
+
+export type AppNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+export type LoginNavigationProp = AppNavigationProp;
+
+export function useAppNavigation() {
+  return useNavigation<AppNavigationProp>();
+}

@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
 import { FormProvider, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { Button } from "react-native-paper";
@@ -7,22 +6,18 @@ import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
-import { LoginNavigationProp } from "../types/general";
+import { useAppNavigation } from "../types/general";
 import { loginSchema, type LoginFormData } from "../validation/schemas";
 
 export function LoginScreen() {
-  const navigation = useNavigation<LoginNavigationProp>();
+  const navigation = useAppNavigation();
 
   // ALTERADO:
   // Antes essa função apenas mostrava os dados no console.
   // Agora, depois da validação, também navega para RegistroOcorrencia.
   const onSubmit = (data: LoginFormData) => {
     console.log("Login válido", data);
-
-    // NOVO:
-    // Se e-mail e senha passarem pela validação,
-    // o usuário é direcionado para a tela de registro de ocorrência.
-    navigation.navigate("RegistroOcorrencia");
+    navigation.navigate("Menu");
   };
 
   const form = useForm<LoginFormData>({
