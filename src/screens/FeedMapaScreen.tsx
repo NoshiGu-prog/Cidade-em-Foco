@@ -1,8 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
-import { ScrollView } from "react-native";
+import { useForm } from "react-hook-form";
 import { useAppSnackbar } from "../components/AppSnackbar";
-import { colors } from "../theme/theme";
 import { useAppNavigation } from "../types/general";
 import { cadastroSchema, type CadastroFormData } from "../validation/schemas";
 import MapComponent from "./FeedMapa/map";
@@ -32,18 +30,5 @@ export function FeedMapaScreen() {
     }, 1000);
   };
 
-  return (
-    <FormProvider {...form}>
-      <ScrollView
-        contentContainerStyle={{
-          padding: 24,
-          gap: 16,
-          flexGrow: 1,
-          backgroundColor: colors.background,
-        }}
-      >
-        <MapComponent />
-      </ScrollView>
-    </FormProvider>
-  );
+  return <MapComponent />;
 }

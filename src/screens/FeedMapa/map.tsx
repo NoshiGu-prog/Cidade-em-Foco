@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import { Binoculars } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, View } from "react-native";
 import { ActivityIndicator, FAB, Text } from "react-native-paper";
 import { WebView } from "react-native-webview";
 import { colors } from "../../theme/theme";
@@ -92,10 +92,10 @@ export default function MapComponent() {
     : "";
 
   return (
-    <View style={styles.mapContainer}>
+    <View style={{ flex: 1, width: "100%", height: "100%" }}>
       {/* Mostra um Loading até o GPS responder */}
       {!userLocation ? (
-        <View style={styles.loadingContainer}>
+        <View>
           <ActivityIndicator animating={true} color="#35639f" size="large" />
           <Text style={{ marginTop: 16, color: "#333" }}>{loadingMsg}</Text>
         </View>
@@ -109,7 +109,7 @@ export default function MapComponent() {
         <WebView
           originWhitelist={["*"]}
           source={{ html: mapHtml }}
-          style={styles.map}
+          style={{ flex: 1 }}
           scrollEnabled={false}
           bounces={false}
         />
@@ -122,8 +122,8 @@ export default function MapComponent() {
           icon={() => <Binoculars />}
           style={{
             position: "absolute",
-            right: 0,
-            bottom: 10,
+            right: 20,
+            bottom: 20,
             backgroundColor: colors.brandGreen,
             borderRadius: 100,
           }}
@@ -133,38 +133,3 @@ export default function MapComponent() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  topBar: {
-    backgroundColor: "#35639f",
-    justifyContent: "center",
-    elevation: 4,
-  },
-  appBarContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  appBarTitle: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  mapContainer: { flex: 1, position: "relative" },
-  map: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  fab: {
-    position: "absolute",
-    margin: 16,
-    right: 0,
-    bottom: 10,
-    backgroundColor: "#529b55",
-    borderRadius: 30,
-  },
-  bottomBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "#35639f",
-    height: 60,
-    paddingBottom: 5,
-  },
-});
