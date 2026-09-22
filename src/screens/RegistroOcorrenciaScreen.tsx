@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Camera, MapPin, Sparkles } from "lucide-react-native";
-import { gerarDescricaoIaMock } from "../services/descricaoIa";
+import { gerarDescricaoComIa } from "../services/descricaoIa";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
@@ -147,7 +147,7 @@ export function RegistroOcorrenciaScreen() {
   try {
     setGerandoDescricao(true);
 
-    const sugestao = await gerarDescricaoIaMock(descricaoAtual);
+    const sugestao = await gerarDescricaoComIa(descricaoAtual);
 
     form.setValue("descricao", sugestao, {
       shouldValidate: true,

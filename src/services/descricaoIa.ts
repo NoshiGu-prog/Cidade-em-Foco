@@ -1,13 +1,21 @@
-export async function gerarDescricaoIaMock(
+export async function gerarDescricaoComIa(
   descricaoOriginal: string,
 ): Promise<string> {
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+  const resposta = await fetch("http://localhost:3333/gerar-descricao", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      descricao: descricaoOriginal,
+    }),
+  });
 
-  const descricao = descricaoOriginal.trim();
-
-  if (!descricao) {
-    throw new Error("Informe uma descrição antes de solicitar uma sugestão.");
+  if (!resposta.ok) {
+    throw new Error("Erro ao gerar descrição.");
   }
 
-  return `Ocorrência identificada no local: ${descricao}. Recomenda-se avaliação da situação para verificar os riscos e as providências necessárias.`;
+  const dados = await resposta.json();
+
+  return dados.sugestao;
 }
