@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import { Camera, MapPin } from "lucide-react-native";
+import { Camera, MapPin, Sparkles } from "lucide-react-native";
+import { gerarDescricaoIaMock } from "../services/descricaoIa";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
@@ -23,6 +24,7 @@ export function RegistroOcorrenciaScreen() {
   const [obtendoLocalizacao, setObtendoLocalizacao] = useState(false);
   const [erroLocalizacao, setErroLocalizacao] = useState<string | null>(null);
   const [endereco, setEndereco] = useState<string | null>(null);
+  const [gerandoDescricao, setGerandoDescricao] = useState(false);
 
   const form = useForm<OcorrenciaFormData>({
     resolver: zodResolver(ocorrenciaSchema),
@@ -133,6 +135,33 @@ export function RegistroOcorrenciaScreen() {
       setObtendoLocalizacao(false);
     }
   };
+
+  const melhorarDescricao = async () => {
+  const descricaoAtual = form.getValues("descricao");
+
+  if (!descricaoAtual.trim()) {
+    showSnackbar("Informe uma descrição antes de usar a sugestão com IA.");
+    return;
+  }
+
+  try {
+    setGerandoDescricao(true);
+
+    const sugestao = await gerarDescricaoIaMock(descricaoAtual);
+
+    form.setValue("descricao", sugestao, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    showSnackbar("Sugestão aplicada. Revise o texto antes de registrar.");
+  } catch (erro) {
+    console.log("Erro ao gerar descrição:", erro);
+    showSnackbar("Não foi possível gerar uma sugestão.");
+  } finally {
+    setGerandoDescricao(false);
+  }
+};
 
   const onSubmit = (data: OcorrenciaFormData) => {
     if (!fotoUri) {
@@ -245,6 +274,18 @@ export function RegistroOcorrenciaScreen() {
               multiline
               numberOfLines={5}
             />
+
+            <Button
+             mode="outlined"
+             onPress={melhorarDescricao}
+             loading={gerandoDescricao}
+             disabled={gerandoDescricao}
+             icon={({ color, size }) => (
+               <Sparkles color={color} size={size} />
+             )}
+            >
+              {gerandoDescricao ? "Gerando sugestão..." : "Melhorar descrição com IA"}
+            </Button>
 
             <View style={styles.dangerRow}>
               <View>
