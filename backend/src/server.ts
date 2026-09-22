@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { gerarDescricao } from "./services/descricaoIa.js";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.post("/gerar-descricao", (req, res) => {
+app.post("/gerar-descricao", async (req, res) => {
   const { descricao } = req.body;
 
   if (!descricao || typeof descricao !== "string") {
@@ -26,13 +27,19 @@ app.post("/gerar-descricao", (req, res) => {
     });
   }
 
-  const sugestao =
-    `Ocorrência identificada no local: ${descricao.trim()}. ` +
-    "Recomenda-se avaliação da situação para verificar os riscos e as providências necessárias.";
+  try {
+    const sugestao = await gerarDescricao(descricao);
 
-  return res.json({
-    sugestao,
-  });
+    return res.json({
+      sugestao,
+    });
+  } catch (erro) {
+    console.log("Erro ao gerar descrição:", erro);
+
+    return res.status(500).json({
+      erro: "Não foi possível gerar uma sugestão.",
+    });
+  }
 });
 
 app.listen(PORT, () => {
