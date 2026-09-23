@@ -5,19 +5,21 @@ import { Button } from "react-native-paper";
 import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
+import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/theme";
 import { useAppNavigation } from "../types/general";
 import { loginSchema, type LoginFormData } from "../validation/schemas";
 
 export function LoginScreen() {
   const navigation = useAppNavigation();
+  const { signIn } = useAuth();
 
   // ALTERADO:
   // Antes essa função apenas mostrava os dados no console.
   // Agora, depois da validação, também navega para RegistroOcorrencia.
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     console.log("Login válido", data);
-    navigation.navigate("Menu");
+    await signIn();
   };
 
   const form = useForm<LoginFormData>({

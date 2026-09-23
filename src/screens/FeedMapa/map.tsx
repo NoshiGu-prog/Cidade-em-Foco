@@ -5,18 +5,14 @@ import { Platform, View } from "react-native";
 import { ActivityIndicator, FAB, Text } from "react-native-paper";
 import { WebView } from "react-native-webview";
 import { colors } from "../../theme/theme";
-
-const chamadosMock = [
-  { id: "1", lat: -29.1635, lng: -51.1742, titulo: "Buraco na Pista" },
-  { id: "2", lat: -29.1661, lng: -51.173, titulo: "Poste Apagado" },
-  { id: "3", lat: -29.1655, lng: -51.1715, titulo: "Radar Móvel" },
-];
+import { OcorrenciaType } from "../../types/ocorrencia";
 
 interface MapComponentProps {
   webViewRef?: RefObject<any>;
   onMarkerSelect?: (chamadoId: string) => void;
   onOpenSheet?: () => void;
   showFab?: boolean;
+  list: OcorrenciaType[];
 }
 
 export default function MapComponent({
@@ -24,6 +20,7 @@ export default function MapComponent({
   onMarkerSelect,
   onOpenSheet,
   showFab = true,
+  list,
 }: MapComponentProps) {
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -84,11 +81,10 @@ export default function MapComponent({
                 radius: 8
             }).addTo(map).bindPopup("<b>Você está aqui</b>");
 
-            var chamados = ${JSON.stringify(chamadosMock)};
+            var chamados = ${JSON.stringify(list)};
             chamados.forEach(function(chamado) {
-                var marker = L.marker([chamado.lat, chamado.lng]).addTo(map);
-                marker.bindPopup("<b>" + chamado.titulo + "</b>");
-                
+                var marker = L.marker([chamado.latitude, chamado.longitude]).addTo(map);
+                marker.bindPopup("<b>" + chamado.descricao + "</b>");
                 // Envia mensagem para o React Native ao clicar no pino do mapa
                 marker.on('click', function() {
                     if (window.ReactNativeWebView) {
@@ -105,6 +101,16 @@ export default function MapComponent({
                     duration: 1.5
                 });
             };
+
+            window.addEventListener('message', function(event) {
+              var data = typeof event.data === 'string'
+                ? JSON.parse(event.data)
+                : event.data;
+
+              if (data.type === 'FOCUS_COORDINATE') {
+                window.focarCoordenada(data.lat, data.lng);
+              }
+            });
         </script>
     </body>
     </html>

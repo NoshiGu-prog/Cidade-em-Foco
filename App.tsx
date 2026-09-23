@@ -9,8 +9,9 @@ import { theme } from "./src/theme/theme";
 
 import { AppSnackbarProvider } from "./src/components/AppSnackbar";
 import MenuBar from "./src/components/MenuBar";
+import { AuthProvider, useAuth } from "./src/context/AuthContext";
 
-const RootStack = createNativeStackNavigator({
+const AuthStack = createNativeStackNavigator({
   initialRouteName: "Login",
   screens: {
     Login: {
@@ -26,6 +27,12 @@ const RootStack = createNativeStackNavigator({
         header: () => <></>,
       },
     },
+  },
+});
+
+const AppStack = createNativeStackNavigator({
+  initialRouteName: "Menu",
+  screens: {
     Menu: {
       screen: MenuBar,
       options: {
@@ -36,7 +43,18 @@ const RootStack = createNativeStackNavigator({
   },
 });
 
-const Navigation = createStaticNavigation(RootStack);
+const AuthNavigation = createStaticNavigation(AuthStack);
+const AppNavigation = createStaticNavigation(AppStack);
+
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  return isAuthenticated ? <AppNavigation /> : <AuthNavigation />;
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Roboto_400Regular });
@@ -48,7 +66,9 @@ export default function App() {
   return (
     <PaperProvider theme={theme}>
       <AppSnackbarProvider>
-        <Navigation />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </AppSnackbarProvider>
     </PaperProvider>
   );

@@ -1,53 +1,24 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Platform, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Card, Text } from "react-native-paper";
 
+import { ocorrenciasMock } from "../components/mock";
+import { colors } from "../theme/theme";
+import { OcorrenciaType } from "../types/ocorrencia";
 import MapComponent from "./FeedMapa/map";
 
-interface Ocorrencia {
-  id: string;
-  titulo: string;
-  descricao: string;
-  lat: number;
-  lng: number;
-  data: string;
-}
-
-const ocorrenciasMock: Ocorrencia[] = [
-  {
-    id: "1",
-    titulo: "Buraco na Pista",
-    descricao: "Rua Ângelo Corso",
-    lat: -29.1635,
-    lng: -51.1742,
-    data: "Hoje às 14:00",
-  },
-  {
-    id: "2",
-    titulo: "Poste Apagado",
-    descricao: "Rua Padre João Schiavo",
-    lat: -29.1661,
-    lng: -51.173,
-    data: "Ontem",
-  },
-  {
-    id: "3",
-    titulo: "Radar Móvel",
-    descricao: "Av. Brasil",
-    lat: -29.1655,
-    lng: -51.1715,
-    data: "Há 2 horas",
-  },
-];
+const CARD_HEIGHT = 250;
+const CARD_GAP = 16;
+const CARD_SNAP_INTERVAL = CARD_HEIGHT + CARD_GAP;
 
 export function FeedMapaScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const webViewRef = useRef<any>(null);
   const flatListRef = useRef<any>(null);
 
-  const snapPoints = useMemo(() => ["50%", "90%"], []);
+  const snapPoints = useMemo(() => ["50%", "100%"], []);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const handleOpenSheet = useCallback(() => {
@@ -56,13 +27,16 @@ export function FeedMapaScreen() {
   }, []);
 
   // Injeta JavaScript na WebView para mover a câmera
-  const focarNoMapa = (lat: number, lng: number) => {
+  const focarNoMapa = (lat?: number, lng?: number) => {
     const script = `window.focarCoordenada(${lat}, ${lng}); true;`;
     if (webViewRef.current) {
       if (webViewRef.current.injectJavaScript) {
         webViewRef.current.injectJavaScript(script);
       } else if (webViewRef.current.contentWindow) {
-        webViewRef.current.contentWindow.postMessage(script, "*");
+        webViewRef.current.contentWindow.postMessage(
+          JSON.stringify({ type: "FOCUS_COORDINATE", lat, lng }),
+          "*",
+        );
       }
     }
   };
@@ -70,8 +44,9 @@ export function FeedMapaScreen() {
   // Ao rolar a lista de ocorrências no BottomSheet
   const handleViewableItemsChanged = useCallback(({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
-      const itemVisivel = viewableItems[0].item as Ocorrencia;
-      focarNoMapa(itemVisivel.lat, itemVisivel.lng);
+      const itemVisivel = viewableItems[0].item as OcorrenciaType;
+      console.log({ itemVisivel });
+      focarNoMapa(itemVisivel?.latitude, itemVisivel?.longitude);
     }
   }, []);
 
@@ -86,12 +61,13 @@ export function FeedMapaScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.container}>
+      <View style={{ flex: 1 }}>
         <MapComponent
           webViewRef={webViewRef}
           onOpenSheet={handleOpenSheet}
           onMarkerSelect={handleMarkerSelect}
           showFab={!sheetOpen}
+          list={ocorrenciasMock}
         />
 
         <BottomSheet
@@ -101,8 +77,16 @@ export function FeedMapaScreen() {
           enablePanDownToClose={true}
           onClose={() => setSheetOpen(false)}
         >
-          <View style={{ paddingHorizontal: 16 }}>
-            <Text variant="titleMedium" style={styles.sheetTitle}>
+          <View
+            style={{
+              paddingHorizontal: 16,
+              backgroundColor: colors.background,
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: "bold", marginBottom: 8 }}
+            >
               Ocorrências Próximas
             </Text>
           </View>
@@ -111,16 +95,45 @@ export function FeedMapaScreen() {
             ref={flatListRef}
             data={ocorrenciasMock}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingBottom: 16,
+              backgroundColor: colors.background,
+            }}
+            style={
+              Platform.OS === "web"
+                ? ({ scrollSnapType: "y mandatory" } as any)
+                : undefined
+            }
+            snapToInterval={CARD_SNAP_INTERVAL}
+            snapToAlignment="start"
+            disableIntervalMomentum
+            getItemLayout={(_, index) => ({
+              length: CARD_SNAP_INTERVAL,
+              offset: CARD_SNAP_INTERVAL * index,
+              index,
+            })}
             onViewableItemsChanged={handleViewableItemsChanged}
             viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => focarNoMapa(item.lat, item.lng)}>
-                <Card style={styles.card} mode="outlined">
-                  <Card.Title title={item.titulo} subtitle={item.data} />
-                  <Card.Content>
-                    <Text variant="bodyMedium">{item.descricao}</Text>
-                  </Card.Content>
+              <TouchableOpacity
+                onPress={() => focarNoMapa(item.latitude, item.longitude)}
+                style={[
+                  { height: CARD_HEIGHT, marginBottom: CARD_GAP },
+                  Platform.OS === "web"
+                    ? ({
+                        scrollSnapAlign: "start",
+                        scrollSnapStop: "always",
+                      } as any)
+                    : undefined,
+                ]}
+              >
+                <Card mode="elevated">
+                  <Card.Cover
+                    source={{ uri: item.imagem }}
+                    style={{ height: 190 }}
+                  />
+                  <Card.Title title={item.descricao} />
                 </Card>
               </TouchableOpacity>
             )}
@@ -130,16 +143,3 @@ export function FeedMapaScreen() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  sheetHeader: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  sheetTitle: { fontWeight: "bold", color: "#35639f" },
-  listContent: { padding: 16 },
-  card: { marginBottom: 12, backgroundColor: "#fff" },
-});
