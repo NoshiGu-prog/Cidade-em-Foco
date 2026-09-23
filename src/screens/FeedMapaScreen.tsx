@@ -17,6 +17,7 @@ export function FeedMapaScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const webViewRef = useRef<any>(null);
   const flatListRef = useRef<any>(null);
+  const skippedInitialListFocus = useRef(false);
 
   const snapPoints = useMemo(() => ["50%", "100%"], []);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -43,6 +44,11 @@ export function FeedMapaScreen() {
 
   // Ao rolar a lista de ocorrências no BottomSheet
   const handleViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (!skippedInitialListFocus.current) {
+      skippedInitialListFocus.current = true;
+      return;
+    }
+
     if (viewableItems.length > 0) {
       const itemVisivel = viewableItems[0].item as OcorrenciaType;
       console.log({ itemVisivel });
@@ -114,8 +120,7 @@ export function FeedMapaScreen() {
               index,
             })}
             onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: OcorrenciaType }) => (
               <TouchableOpacity
                 onPress={() => focarNoMapa(item.latitude, item.longitude)}
                 style={[
@@ -128,12 +133,19 @@ export function FeedMapaScreen() {
                     : undefined,
                 ]}
               >
-                <Card mode="elevated">
+                <Card
+                  mode="elevated"
+                  style={{ height: CARD_HEIGHT, backgroundColor: "white" }}
+                >
                   <Card.Cover
                     source={{ uri: item.imagem }}
-                    style={{ height: 190 }}
+                    style={{ height: 180 }}
                   />
-                  <Card.Title title={item.descricao} />
+                  <Card.Title
+                    title={item.descricao}
+                    titleVariant="titleMedium"
+                    subtitle={`Criado em: ${new Date(item.criadaEm).toLocaleDateString("pt-BR")}`}
+                  />
                 </Card>
               </TouchableOpacity>
             )}

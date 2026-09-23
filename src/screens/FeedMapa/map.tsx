@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
-import { Binoculars } from "lucide-react-native";
-import { RefObject, useEffect, useState } from "react";
+import { Binoculars, LocateFixed } from "lucide-react-native";
+import { RefObject, useCallback, useEffect, useState } from "react";
 import { Platform, View } from "react-native";
 import { ActivityIndicator, FAB, Text } from "react-native-paper";
 import { WebView } from "react-native-webview";
@@ -27,6 +27,24 @@ export default function MapComponent({
     lng: number;
   } | null>(null);
   const [loadingMsg, setLoadingMsg] = useState("Buscando sua localização...");
+
+  const focarNaLocalizacao = () => {
+    if (!userLocation || !webViewRef?.current) {
+      return;
+    }
+
+    const { lat, lng } = userLocation;
+    const script = `window.focarCoordenada(${lat}, ${lng}); true;`;
+
+    if (webViewRef.current.injectJavaScript) {
+      webViewRef.current.injectJavaScript(script);
+    } else if (webViewRef.current.contentWindow) {
+      webViewRef.current.contentWindow.postMessage(
+        JSON.stringify({ type: "FOCUS_COORDINATE", lat, lng }),
+        "*",
+      );
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -61,6 +79,18 @@ export default function MapComponent({
         <style>
             body { padding: 0; margin: 0; }
             html, body, #map { height: 100%; width: 100%; }
+            .custom-marker-wrapper { background: transparent; border: none; }
+            .custom-marker {
+                display: block;
+                width: 24px;
+                height: 24px;
+                border: 3px solid #ffffff;
+                border-radius: 50% 50% 50% 0;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+                transform: rotate(-45deg);
+            }
+            .custom-marker-normal { background: #35639f; }
+            .custom-marker-dangerous { background: #d32f2f; }
         </style>
     </head>
     <body>
@@ -83,7 +113,17 @@ export default function MapComponent({
 
             var chamados = ${JSON.stringify(list)};
             chamados.forEach(function(chamado) {
-                var marker = L.marker([chamado.latitude, chamado.longitude]).addTo(map);
+              var markerClass = chamado.perigosa
+                ? 'custom-marker-dangerous'
+                : 'custom-marker-normal';
+              var marker = L.marker([chamado.latitude, chamado.longitude], {
+                icon: L.divIcon({
+                  className: 'custom-marker-wrapper',
+                  html: '<span class="custom-marker ' + markerClass + '"></span>',
+                  iconSize: [30, 30],
+                  iconAnchor: [15, 30]
+                })
+              }).addTo(map);
                 marker.bindPopup("<b>" + chamado.descricao + "</b>");
                 // Envia mensagem para o React Native ao clicar no pino do mapa
                 marker.on('click', function() {
@@ -117,18 +157,32 @@ export default function MapComponent({
   `
     : "";
 
-  const handleMessage = (event: any) => {
-    try {
-      const data = JSON.parse(
-        event.nativeEvent ? event.nativeEvent.data : event.data,
-      );
-      if (data.type === "MARKER_CLICK") {
-        onMarkerSelect?.(data.id);
+  const handleMessage = useCallback(
+    (event: any) => {
+      try {
+        const message = event.nativeEvent?.data ?? event.data;
+        const data =
+          typeof message === "string" ? JSON.parse(message) : message;
+
+        if (data.type === "MARKER_CLICK") {
+          onMarkerSelect?.(data.id);
+        }
+      } catch (e) {
+        console.log(e);
       }
-    } catch (e) {
-      console.log(e);
+    },
+    [onMarkerSelect],
+  );
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      window.addEventListener("message", handleMessage);
+
+      return () => window.removeEventListener("message", handleMessage);
     }
-  };
+
+    return undefined;
+  }, [handleMessage]);
 
   return (
     <View style={{ flex: 1, width: "100%", height: "100%" }}>
@@ -159,18 +213,32 @@ export default function MapComponent({
       )}
 
       {userLocation && showFab && (
-        <FAB
-          size="medium"
-          icon={() => <Binoculars color="#fff" size={24} />}
-          style={{
-            position: "absolute",
-            right: 20,
-            bottom: 20,
-            backgroundColor: colors.brandGreen,
-            borderRadius: 100,
-          }}
-          onPress={onOpenSheet}
-        />
+        <>
+          <FAB
+            size="medium"
+            icon={() => <LocateFixed color="#fff" size={24} />}
+            style={{
+              position: "absolute",
+              right: 20,
+              bottom: 84,
+              backgroundColor: colors.brandBlue,
+              borderRadius: 100,
+            }}
+            onPress={focarNaLocalizacao}
+          />
+          <FAB
+            size="medium"
+            icon={() => <Binoculars color="#fff" size={24} />}
+            style={{
+              position: "absolute",
+              right: 20,
+              bottom: 20,
+              backgroundColor: colors.brandGreen,
+              borderRadius: 100,
+            }}
+            onPress={onOpenSheet}
+          />
+        </>
       )}
     </View>
   );
