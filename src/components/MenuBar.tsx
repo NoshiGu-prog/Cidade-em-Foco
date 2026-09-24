@@ -2,7 +2,7 @@ import { Bell, Map, Newspaper, Plus, UserRound } from "lucide-react-native";
 import * as React from "react";
 import { StyleSheet } from "react-native";
 import { BottomNavigation, Text } from "react-native-paper";
-import { FeedMapaScreen } from "../screens/FeedMapaScreen";
+import { FeedMapaScreen } from "../screens/FeedMapa/FeedMapaScreen";
 import { RegistroOcorrenciaScreen } from "../screens/RegistroOcorrenciaScreen";
 import { colors } from "../theme/theme";
 

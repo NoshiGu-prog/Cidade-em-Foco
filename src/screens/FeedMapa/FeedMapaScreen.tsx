@@ -1,26 +1,72 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Platform, TouchableOpacity, View } from "react-native";
+import { Platform, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Card, Text } from "react-native-paper";
 
-import { ocorrenciasMock } from "../components/mock";
-import { colors } from "../theme/theme";
-import { OcorrenciaType } from "../types/ocorrencia";
-import MapComponent from "./FeedMapa/map";
+import { ocorrenciasMock } from "../../components/mock";
+import { colors } from "../../theme/theme";
+import { OcorrenciaType } from "../../types/ocorrencia";
+import MapComponent from "./map";
 
-const CARD_HEIGHT = 250;
+const CARD_HEIGHT = 270;
 const CARD_GAP = 16;
 const CARD_SNAP_INTERVAL = CARD_HEIGHT + CARD_GAP;
 
+function calculateDistanceInMeters(
+  origin: { lat: number; lng: number },
+  destination: { lat?: number; lng?: number },
+) {
+  if (destination.lat == null || destination.lng == null) {
+    return null;
+  }
+
+  const earthRadius = 6371000;
+  const latitudeDifference = ((destination.lat - origin.lat) * Math.PI) / 180;
+  const longitudeDifference = ((destination.lng - origin.lng) * Math.PI) / 180;
+  const originLatitude = (origin.lat * Math.PI) / 180;
+  const destinationLatitude = (destination.lat * Math.PI) / 180;
+  const haversine =
+    Math.sin(latitudeDifference / 2) ** 2 +
+    Math.cos(originLatitude) *
+      Math.cos(destinationLatitude) *
+      Math.sin(longitudeDifference / 2) ** 2;
+
+  return (
+    2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+  );
+}
+
+function formatDistance(distanceInMeters: number | null) {
+  if (distanceInMeters == null) {
+    return "Distância indisponível";
+  }
+
+  return distanceInMeters < 1000
+    ? `${Math.round(distanceInMeters)} m`
+    : `${(distanceInMeters / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+function getStatusLabel(status: OcorrenciaType["status"]) {
+  return status.replace("_", " ");
+}
+
 export function FeedMapaScreen() {
+  // Pegando a altura da tela
+  const { height: windowHeight } = useWindowDimensions();
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const webViewRef = useRef<any>(null);
   const flatListRef = useRef<any>(null);
   const skippedInitialListFocus = useRef(false);
+  const pendingOccurrenceId = useRef<string | null>(null);
 
   const snapPoints = useMemo(() => ["50%", "100%"], []);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   const handleOpenSheet = useCallback(() => {
     bottomSheetRef.current?.snapToIndex(0);
@@ -44,20 +90,47 @@ export function FeedMapaScreen() {
 
   // Ao rolar a lista de ocorrências no BottomSheet
   const handleViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    const selectedItem = pendingOccurrenceId.current
+      ? viewableItems.find(
+          ({ item }: { item: OcorrenciaType }) =>
+            item.id === pendingOccurrenceId.current,
+        )?.item
+      : null;
+
+    if (pendingOccurrenceId.current && !selectedItem) {
+      return;
+    }
+
     if (!skippedInitialListFocus.current) {
       skippedInitialListFocus.current = true;
       return;
     }
 
     if (viewableItems.length > 0) {
-      const itemVisivel = viewableItems[0].item as OcorrenciaType;
+      const itemVisivel = (selectedItem ??
+        viewableItems[0].item) as OcorrenciaType;
+      pendingOccurrenceId.current = null;
       console.log({ itemVisivel });
       focarNoMapa(itemVisivel?.latitude, itemVisivel?.longitude);
     }
   }, []);
 
+  const handleScrollEnd = useCallback((event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const reachedEnd =
+      contentOffset.y + layoutMeasurement.height >= contentSize.height - 8;
+
+    if (reachedEnd) {
+      const lastOccurrence = ocorrenciasMock[ocorrenciasMock.length - 1];
+      pendingOccurrenceId.current = null;
+      focarNoMapa(lastOccurrence.latitude, lastOccurrence.longitude);
+    }
+  }, []);
+
   // Ao clicar em um pino dentro do mapa
   const handleMarkerSelect = (id: string) => {
+    pendingOccurrenceId.current = id;
+    skippedInitialListFocus.current = true;
     handleOpenSheet();
     const index = ocorrenciasMock.findIndex((item) => item.id === id);
     if (index !== -1 && flatListRef.current) {
@@ -72,6 +145,7 @@ export function FeedMapaScreen() {
           webViewRef={webViewRef}
           onOpenSheet={handleOpenSheet}
           onMarkerSelect={handleMarkerSelect}
+          onUserLocationChange={setUserLocation}
           showFab={!sheetOpen}
           list={ocorrenciasMock}
         />
@@ -103,8 +177,9 @@ export function FeedMapaScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{
               paddingHorizontal: 16,
-              paddingBottom: 16,
               backgroundColor: colors.background,
+              // Espaço extra no final garante que o último card possa subir até o topo
+              paddingBottom: windowHeight - CARD_HEIGHT,
             }}
             style={
               Platform.OS === "web"
@@ -120,9 +195,9 @@ export function FeedMapaScreen() {
               index,
             })}
             onViewableItemsChanged={handleViewableItemsChanged}
+            onMomentumScrollEnd={handleScrollEnd}
             renderItem={({ item }: { item: OcorrenciaType }) => (
-              <TouchableOpacity
-                onPress={() => focarNoMapa(item.latitude, item.longitude)}
+              <View
                 style={[
                   { height: CARD_HEIGHT, marginBottom: CARD_GAP },
                   Platform.OS === "web"
@@ -139,15 +214,36 @@ export function FeedMapaScreen() {
                 >
                   <Card.Cover
                     source={{ uri: item.imagem }}
-                    style={{ height: 180 }}
+                    style={{ height: 112 }}
                   />
                   <Card.Title
-                    title={item.descricao}
+                    title={item.endereco}
+                    subtitleVariant="titleSmall"
                     titleVariant="titleMedium"
-                    subtitle={`Criado em: ${new Date(item.criadaEm).toLocaleDateString("pt-BR")}`}
+                    subtitle={`Status: ${getStatusLabel(item.status)}`}
                   />
+                  <Card.Content style={{ paddingBottom: 8 }}>
+                    <Text
+                      style={{
+                        overflow: "hidden",
+                      }}
+                    >
+                      {item.descricao}
+                    </Text>
+                    <Text style={{ textAlign: "right" }}>
+                      há{" "}
+                      {formatDistance(
+                        userLocation
+                          ? calculateDistanceInMeters(userLocation, {
+                              lat: item.latitude,
+                              lng: item.longitude,
+                            })
+                          : null,
+                      )}
+                    </Text>
+                  </Card.Content>
                 </Card>
-              </TouchableOpacity>
+              </View>
             )}
           />
         </BottomSheet>

@@ -11,6 +11,7 @@ interface MapComponentProps {
   webViewRef?: RefObject<any>;
   onMarkerSelect?: (chamadoId: string) => void;
   onOpenSheet?: () => void;
+  onUserLocationChange?: (location: { lat: number; lng: number }) => void;
   showFab?: boolean;
   list: OcorrenciaType[];
 }
@@ -19,6 +20,7 @@ export default function MapComponent({
   webViewRef,
   onMarkerSelect,
   onOpenSheet,
+  onUserLocationChange,
   showFab = true,
   list,
 }: MapComponentProps) {
@@ -27,6 +29,12 @@ export default function MapComponent({
     lng: number;
   } | null>(null);
   const [loadingMsg, setLoadingMsg] = useState("Buscando sua localização...");
+
+  useEffect(() => {
+    if (userLocation) {
+      onUserLocationChange?.(userLocation);
+    }
+  }, [onUserLocationChange, userLocation]);
 
   const focarNaLocalizacao = () => {
     if (!userLocation || !webViewRef?.current) {

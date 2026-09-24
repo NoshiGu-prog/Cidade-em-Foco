@@ -14,4 +14,5 @@ export interface OcorrenciaType {
   status: StatusOcorrencia;
   criadaEm: Date | string;
   imagem: string;
+  endereco: string;
 }
