@@ -222,7 +222,13 @@ export function FeedMapaScreen() {
                     titleVariant="titleMedium"
                     subtitle={`Status: ${getStatusLabel(item.status)}`}
                   />
-                  <Card.Content style={{ paddingBottom: 8 }}>
+                  <Card.Content
+                    style={{
+                      paddingBottom: 8,
+                      justifyContent: "space-between",
+                      flex: 1,
+                    }}
+                  >
                     <Text
                       style={{
                         overflow: "hidden",
@@ -230,17 +236,23 @@ export function FeedMapaScreen() {
                     >
                       {item.descricao}
                     </Text>
-                    <Text style={{ textAlign: "right" }}>
-                      há{" "}
-                      {formatDistance(
-                        userLocation
-                          ? calculateDistanceInMeters(userLocation, {
-                              lat: item.latitude,
-                              lng: item.longitude,
-                            })
-                          : null,
-                      )}
-                    </Text>
+                    <View
+                      style={{
+                        alignItems: "flex-end",
+                      }}
+                    >
+                      <Text style={{ textAlign: "right" }}>
+                        há{" "}
+                        {formatDistance(
+                          userLocation
+                            ? calculateDistanceInMeters(userLocation, {
+                                lat: item.latitude,
+                                lng: item.longitude,
+                              })
+                            : null,
+                        )}
+                      </Text>
+                    </View>
                   </Card.Content>
                 </Card>
               </View>

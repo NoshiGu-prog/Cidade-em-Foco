@@ -11,8 +11,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "ENVIADA",
     endereco: "Av. Júlio de Castilhos, 1500 - Centro",
-    imagem:
-      "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/1044/500/300", // Rua/Asfalto
   },
   {
     id: "2",
@@ -23,8 +22,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: false,
     status: "EM_ANALISE",
     endereco: "Rua Plácido de Castro, 300 - Exposição",
-    imagem:
-      "https://images.unsplash.com/photo-1519782539659-cb18d6e3cbb0?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/122/500/300", // Rua escura/noite
   },
   {
     id: "3",
@@ -36,8 +34,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "EM_ANDAMENTO",
     endereco: "Av. Rio Branco, 400 - São Pelegrino",
-    imagem:
-      "https://images.unsplash.com/photo-1599581898731-0eb1e8f237f3?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/293/500/300", // Árvores/Natureza
   },
   {
     id: "4",
@@ -48,8 +45,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: false,
     status: "ENVIADA",
     endereco: "Rua Sinimbu, 2200 - Lourdes",
-    imagem:
-      "https://images.unsplash.com/photo-1542106644-88db05634031?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/175/500/300", // Rua da cidade
   },
   {
     id: "5",
@@ -60,8 +56,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: false,
     status: "RESOLVIDA",
     endereco: "Rua Cristiano Ramos de Oliveira, 850 - Desvio Rizzo",
-    imagem:
-      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/195/500/300", // Terreno/Estrutura
   },
   {
     id: "6",
@@ -72,8 +67,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "ENVIADA",
     endereco: "Rua Moreira César, 1100 - Pio X",
-    imagem:
-      "https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/133/500/300", // Carros e postes urbanos
   },
   {
     id: "7",
@@ -84,8 +78,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "EM_ANDAMENTO",
     endereco: "Rua Luiz Michielon, 550 - Cruzeiro",
-    imagem:
-      "https://images.unsplash.com/photo-1627914710188-75b2298c56cc?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/164/500/300", // Detalhe de rua
   },
   {
     id: "8",
@@ -97,8 +90,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     status: "ENVIADA",
     endereco:
       "Esquina da Rua Visconde de Pelotas com Pinheiro Machado - Centro",
-    imagem:
-      "https://images.unsplash.com/photo-1554528147-380d0d8ac93d?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/274/500/300", // Luzes da cidade
   },
   {
     id: "9",
@@ -109,8 +101,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "RESOLVIDA",
     endereco: "Rua Matteo Gianella, 120 - Santa Catarina",
-    imagem:
-      "https://images.unsplash.com/photo-1582298538104-fe2e74c87b8b?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/1064/500/300", // Rua/Calçada
   },
   {
     id: "10",
@@ -121,8 +112,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "EM_ANALISE",
     endereco: "BR-116, Km 160 - Galópolis",
-    imagem:
-      "https://images.unsplash.com/photo-1623910325413-eb04ec28203d?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/355/500/300", // Estrada de terra/acostamento
   },
   {
     id: "11",
@@ -133,8 +123,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: false,
     status: "ENVIADA",
     endereco: "Rua João Nichele, 200 - São José",
-    imagem:
-      "https://images.unsplash.com/photo-1542223788-29ce459ed840?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/183/500/300", // Elementos urbanos/Veículo
   },
   {
     id: "12",
@@ -145,8 +134,7 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: false,
     status: "RESOLVIDA",
     endereco: "Av. Rio Branco, 3000 - Ana Rech",
-    imagem:
-      "https://images.unsplash.com/photo-1580840428574-8b6ee7b7a61c?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/1055/500/300", // Crossover/Cena urbana
   },
   {
     id: "13",
@@ -157,7 +145,6 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     perigosa: true,
     status: "ENVIADA",
     endereco: "Rua Ludovico Cavinato, 1000 - Nossa Sra. da Saúde",
-    imagem:
-      "https://images.unsplash.com/photo-1559868414-2c26ea61530e?auto=format&fit=crop&w=1170&q=80",
+    imagem: "https://picsum.photos/id/318/500/300", // Paisagem com elementos verticais
   },
 ];
