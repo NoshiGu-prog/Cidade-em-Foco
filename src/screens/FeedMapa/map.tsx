@@ -12,6 +12,7 @@ interface MapComponentProps {
   onMarkerSelect?: (chamadoId: string) => void;
   onOpenSheet?: () => void;
   onUserLocationChange?: (location: { lat: number; lng: number }) => void;
+  onMapReady?: () => void;
   showFab?: boolean;
   list: OcorrenciaType[];
 }
@@ -21,6 +22,7 @@ export default function MapComponent({
   onMarkerSelect,
   onOpenSheet,
   onUserLocationChange,
+  onMapReady,
   showFab = true,
   list,
 }: MapComponentProps) {
@@ -42,7 +44,7 @@ export default function MapComponent({
     }
 
     const { lat, lng } = userLocation;
-    const script = `window.focarCoordenada(${lat}, ${lng}); true;`;
+    const script = `typeof globalThis.focarCoordenada === 'function' && globalThis.focarCoordenada(${lat}, ${lng}); true;`;
 
     if (webViewRef.current.injectJavaScript) {
       webViewRef.current.injectJavaScript(script);
@@ -143,20 +145,20 @@ export default function MapComponent({
                 });
             });
 
-            window.focarCoordenada = function(lat, lng) {
+            globalThis.focarCoordenada = function(lat, lng) {
                 map.flyTo([lat, lng], 17, {
                     animate: true,
                     duration: 1.5
                 });
             };
 
-            window.addEventListener('message', function(event) {
+            globalThis.addEventListener('message', function(event) {
               var data = typeof event.data === 'string'
                 ? JSON.parse(event.data)
                 : event.data;
 
               if (data.type === 'FOCUS_COORDINATE') {
-                window.focarCoordenada(data.lat, data.lng);
+                globalThis.focarCoordenada(data.lat, data.lng);
               }
             });
         </script>
@@ -207,6 +209,7 @@ export default function MapComponent({
           srcDoc={mapHtml}
           style={{ width: "100%", height: "100%", border: "none" }}
           title="Mapa"
+          onLoad={onMapReady}
         />
       ) : (
         <WebView
@@ -217,6 +220,7 @@ export default function MapComponent({
           scrollEnabled={false}
           bounces={false}
           onMessage={handleMessage}
+          onLoadEnd={onMapReady}
         />
       )}
 
