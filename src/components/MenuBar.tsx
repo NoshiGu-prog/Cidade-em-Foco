@@ -3,6 +3,8 @@ import * as React from "react";
 import { StyleSheet } from "react-native";
 import { BottomNavigation, Text } from "react-native-paper";
 import { FeedMapaScreen } from "../screens/FeedMapa/FeedMapaScreen";
+// Mere Helen: importa a nova tela de lista de ocorrências.
+import { ListaOcorrenciasScreen } from "../screens/ListaOcorrenciasScreen";
 import { RegistroOcorrenciaScreen } from "../screens/RegistroOcorrenciaScreen";
 import { colors } from "../theme/theme";
 
@@ -67,7 +69,8 @@ export const MenuBar = () => {
   const renderScene = ({ route }: { route: { key: string } }) => {
     switch (route.key) {
       case "feed":
-        return <FeedMapaScreen />;
+        // Mere Helen: o Feed agora mostra a lista de ocorrências.
+        return <ListaOcorrenciasScreen />;
       case "mapa":
         return <FeedMapaScreen />;
       case "registrar":
