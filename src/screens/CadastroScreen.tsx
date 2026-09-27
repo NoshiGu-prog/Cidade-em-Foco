@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
 import {
   AtSign,
   Building2,
@@ -7,7 +6,6 @@ import {
   KeyRound,
   UserRound,
 } from "lucide-react-native";
-import { ArrowLeft } from "lucide-react-native/icons";
 import { FormProvider, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
@@ -18,11 +16,11 @@ import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
 import { colors } from "../theme/theme";
-import { LoginNavigationProp } from "../types/general";
+import { useAppNavigation } from "../types/general";
 import { cadastroSchema, type CadastroFormData } from "../validation/schemas";
 
 export function CadastroScreen() {
-  const navigation = useNavigation<LoginNavigationProp>();
+  const navigation = useAppNavigation();
   const { showSnackbar } = useAppSnackbar();
 
   const form = useForm<CadastroFormData>({
@@ -56,14 +54,6 @@ export function CadastroScreen() {
           backgroundColor: colors.background,
         }}
       >
-        <Button
-          mode="text"
-          onPress={() => navigation.navigate("Login" as never)}
-          style={{ alignSelf: "flex-start" }}
-          icon={({ color, size }) => <ArrowLeft color={color} size={size} />}
-        >
-          Voltar para login
-        </Button>
         <View
           style={{
             flex: 1,
