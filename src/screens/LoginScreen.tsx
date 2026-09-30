@@ -1,40 +1,25 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { FormProvider, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { Button } from "react-native-paper";
 import { InputPassword } from "../components/inputs/PasswordInput";
 import { InputText } from "../components/inputs/TextInput";
 import { LogoWithText } from "../components/logotext";
+import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/theme";
+import { useAppNavigation } from "../types/general";
 import { loginSchema, type LoginFormData } from "../validation/schemas";
 
-// ALTERADO:
-// Foi incluída a rota RegistroOcorrencia.
-// Antes existiam apenas Login e Cadastro.
-type LoginNavigationProp = NativeStackNavigationProp<
-  {
-    Login: undefined;
-    Cadastro: undefined;
-    RegistroOcorrencia: undefined; // NOVO
-  },
-  "Login"
->;
-
 export function LoginScreen() {
-  const navigation = useNavigation<LoginNavigationProp>();
+  const navigation = useAppNavigation();
+  const { signIn } = useAuth();
 
   // ALTERADO:
   // Antes essa função apenas mostrava os dados no console.
   // Agora, depois da validação, também navega para RegistroOcorrencia.
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     console.log("Login válido", data);
-
-    // NOVO:
-    // Se e-mail e senha passarem pela validação,
-    // o usuário é direcionado para a tela de registro de ocorrência.
-    navigation.navigate("RegistroOcorrencia");
+    await signIn();
   };
 
   const form = useForm<LoginFormData>({
@@ -76,30 +61,21 @@ export function LoginScreen() {
             autoCapitalize="none"
           />
 
-          <InputPassword
-            name="senha"
-            label="Senha"
-          />
+          <InputPassword name="senha" label="Senha" />
         </View>
 
         {/* JÁ EXISTIA:
             Esse botão já chama a validação do formulário.
             Se o formulário estiver válido, executa onSubmit.
         */}
-        <Button
-          mode="contained"
-          onPress={form.handleSubmit(onSubmit)}
-        >
+        <Button mode="contained" onPress={form.handleSubmit(onSubmit)}>
           Entrar
         </Button>
 
         {/* JÁ EXISTIA:
             Continua navegando para a tela de cadastro.
         */}
-        <Button
-          mode="text"
-          onPress={() => navigation.navigate("Cadastro")}
-        >
+        <Button mode="text" onPress={() => navigation.navigate("Cadastro")}>
           Criar conta
         </Button>
       </View>

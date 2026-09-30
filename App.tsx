@@ -7,9 +7,11 @@ import { createStaticNavigation } from "@react-navigation/native";
 import { CadastroScreen } from "./src/screens/CadastroScreen";
 import { theme } from "./src/theme/theme";
 
-import { RegistroOcorrenciaScreen } from "./src/screens/RegistroOcorrenciaScreen";
+import { AppSnackbarProvider } from "./src/components/AppSnackbar";
+import MenuBar from "./src/components/MenuBar";
+import { AuthProvider, useAuth } from "./src/context/AuthContext";
 
-const RootStack = createNativeStackNavigator({
+const AuthStack = createNativeStackNavigator({
   initialRouteName: "Login",
   screens: {
     Login: {
@@ -25,17 +27,34 @@ const RootStack = createNativeStackNavigator({
         header: () => <></>,
       },
     },
-    RegistroOcorrencia: {
-      screen: RegistroOcorrenciaScreen,
+  },
+});
+
+const AppStack = createNativeStackNavigator({
+  initialRouteName: "Menu",
+  screens: {
+    Menu: {
+      screen: MenuBar,
       options: {
-        title: "Registrar Ocorrência",
+        title: "Menu",
         header: () => <></>,
       },
     },
   },
 });
 
-const Navigation = createStaticNavigation(RootStack);
+const AuthNavigation = createStaticNavigation(AuthStack);
+const AppNavigation = createStaticNavigation(AppStack);
+
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  return isAuthenticated ? <AppNavigation /> : <AuthNavigation />;
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Roboto_400Regular });
@@ -46,7 +65,11 @@ export default function App() {
 
   return (
     <PaperProvider theme={theme}>
-      <Navigation />
+      <AppSnackbarProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </AppSnackbarProvider>
     </PaperProvider>
   );
 }

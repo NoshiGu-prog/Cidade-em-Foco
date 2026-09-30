@@ -1,10 +1,10 @@
 export type StatusOcorrencia =
-  | 'ENVIADA'
-  | 'EM_ANALISE'
-  | 'EM_ANDAMENTO'
-  | 'RESOLVIDA';
+  | "ENVIADA"
+  | "EM_ANALISE"
+  | "EM_ANDAMENTO"
+  | "RESOLVIDA";
 
-export interface Ocorrencia {
+export interface OcorrenciaType {
   id: string;
   descricao: string;
   fotoUrl?: string;
@@ -12,5 +12,7 @@ export interface Ocorrencia {
   longitude?: number;
   perigosa: boolean;
   status: StatusOcorrencia;
-  criadaEm: string;
+  criadaEm: Date | string;
+  imagem: string;
+  endereco: string;
 }

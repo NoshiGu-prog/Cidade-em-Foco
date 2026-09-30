@@ -6,6 +6,21 @@ export const loginSchema = z.object({
   senha: z.string().min(1, "Informe sua senha"),
 });
 
+export const usuariosMockados = [
+  {
+    nome: "Maria da Silva",
+    cpf: "529.982.247-25",
+    cidade: "Caxias do Sul",
+    email: "maria.silva@example.com",
+  },
+  {
+    nome: "João de Souza",
+    cpf: "935.411.347-80",
+    cidade: "Bento Gonçalves",
+    email: "joao.souza@example.com",
+  },
+] as const;
+
 export const cadastroSchema = z
   .object({
     nome: z.string().trim().min(3, "Informe seu nome completo"),
@@ -15,7 +30,17 @@ export const cadastroSchema = z
       .min(1, "Informe seu CPF")
       .refine((value) => cpf.isValid(value), {
         message: "Informe um CPF válido",
-      }),
+      })
+      .refine(
+        (value) =>
+          !usuariosMockados.some(
+            (usuario) =>
+              usuario.cpf.replace(/\D/g, "") === value.replace(/\D/g, ""),
+          ),
+        {
+          message: "Este CPF já está cadastrado",
+        },
+      ),
     cidade: z.string().trim().min(1, "Informe sua cidade"),
     email: z.string().min(1, "Informe um e-mail válido"),
     senha: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
