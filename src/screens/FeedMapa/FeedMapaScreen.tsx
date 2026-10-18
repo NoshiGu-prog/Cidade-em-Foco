@@ -1,12 +1,22 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { useCallback, useMemo, useRef, useState } from "react";
+
+// ALTERADO: acrescentado useEffect.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { Platform, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Card, Text } from "react-native-paper";
 
 import { ocorrenciasMock } from "../../components/mock";
+
+// ACRESCENTADO: leitura dos dados e acompanhamento das atualizações.
+import {
+  assinarAtualizacoesOcorrencias,
+  carregarOcorrencias,
+} from "../../services/ocorrenciasStorage";
+
 import { colors } from "../../theme/theme";
-import { OcorrenciaType } from "../../types/ocorrencia";
+import type { OcorrenciaType } from "../../types/ocorrencia";
 import MapComponent from "./map";
 
 const CARD_HEIGHT = 270;
@@ -24,6 +34,7 @@ function calculateDistanceInMeters(
   const longitudeDifference = ((destination.lng - origin.lng) * Math.PI) / 180;
   const originLatitude = (origin.lat * Math.PI) / 180;
   const destinationLatitude = (destination.lat * Math.PI) / 180;
+
   const haversine =
     Math.sin(latitudeDifference / 2) ** 2 +
     Math.cos(originLatitude) *
@@ -37,13 +48,22 @@ function calculateDistanceInMeters(
 
 function formatDistance(distanceInMeters: number | null) {
   if (distanceInMeters == null) return "Distância indisponível";
+
   return distanceInMeters < 1000
     ? `${Math.round(distanceInMeters)} m`
     : `${(distanceInMeters / 1000).toFixed(1).replace(".", ",")} km`;
 }
 
+// ALTERADO: apresenta os status com os mesmos nomes usados no feed.
 function getStatusLabel(status: OcorrenciaType["status"]) {
-  return status.replace("_", " ");
+  const labels = {
+    ENVIADA: "Enviada",
+    EM_ANALISE: "Em análise",
+    EM_ANDAMENTO: "Em andamento",
+    RESOLVIDA: "Resolvida",
+  };
+
+  return labels[status];
 }
 
 export function FeedMapaScreen() {
@@ -55,34 +75,94 @@ export function FeedMapaScreen() {
 
   const pendingMapFocus = useRef<{ lat?: number; lng?: number } | null>(null);
   const mapReady = useRef(false);
-
-  // Ref para saber quando o código está fazendo o scroll (e o usuário não)
   const isAutoScrolling = useRef(false);
 
   const snapPoints = useMemo(() => ["50%"], []);
   const [sheetOpen, setSheetOpen] = useState(false);
+
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
 
-  const focarNoMapa = (lat?: number, lng?: number) => {
+  // ACRESCENTADO: lista compartilhada com o armazenamento local.
+  const [ocorrencias, setOcorrencias] = useState<OcorrenciaType[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
+
+  // ACRESCENTADO: permite aos callbacks estáveis acessar a lista atual.
+  const ocorrenciasRef = useRef<OcorrenciaType[]>([]);
+
+  // ACRESCENTADO: carrega os dados e acompanha mudanças feitas no feed.
+  useEffect(() => {
+    let ativo = true;
+    let recebeuAtualizacao = false;
+
+    function aplicarLista(lista: OcorrenciaType[]) {
+      if (!ativo) return;
+
+      ocorrenciasRef.current = lista;
+      setOcorrencias(lista);
+      setErroCarregamento(null);
+      setCarregando(false);
+    }
+
+    const cancelarAssinatura = assinarAtualizacoesOcorrencias((lista) => {
+      recebeuAtualizacao = true;
+      aplicarLista(lista);
+    });
+
+    async function iniciar() {
+      try {
+        const dadosSalvos = await carregarOcorrencias();
+
+        // Evita substituir uma atualização nova por uma leitura anterior.
+        if (!recebeuAtualizacao) {
+          aplicarLista(dadosSalvos ?? ocorrenciasMock);
+        }
+      } catch {
+        if (ativo && !recebeuAtualizacao) {
+          setErroCarregamento(
+            "Não foi possível carregar as ocorrências do mapa. Reabra a tela para tentar novamente.",
+          );
+        }
+      } finally {
+        if (ativo) {
+          setCarregando(false);
+        }
+      }
+    }
+
+    void iniciar();
+
+    // ACRESCENTADO: remove a assinatura ao desmontar a tela.
+    return () => {
+      ativo = false;
+      cancelarAssinatura();
+    };
+  }, []);
+
+  // ALTERADO: callback estável e proteção contra coordenadas ausentes.
+  const focarNoMapa = useCallback((lat?: number, lng?: number) => {
+    if (lat == null || lng == null) return;
+
     pendingMapFocus.current = { lat, lng };
 
     if (!mapReady.current) return;
 
-    const script = `typeof globalThis.focarCoordenada === 'function' && globalThis.focarCoordenada(${lat}, ${lng}); true;`;
-    if (webViewRef.current) {
-      if (webViewRef.current.injectJavaScript) {
-        webViewRef.current.injectJavaScript(script);
-      } else if (webViewRef.current.contentWindow) {
-        webViewRef.current.contentWindow.postMessage(
-          JSON.stringify({ type: "FOCUS_COORDINATE", lat, lng }),
-          "*",
-        );
-      }
+    const script =
+      `typeof globalThis.focarCoordenada === 'function' && ` +
+      `globalThis.focarCoordenada(${lat}, ${lng}); true;`;
+
+    if (webViewRef.current?.injectJavaScript) {
+      webViewRef.current.injectJavaScript(script);
+    } else if (webViewRef.current?.contentWindow) {
+      webViewRef.current.contentWindow.postMessage(
+        JSON.stringify({ type: "FOCUS_COORDINATE", lat, lng }),
+        "*",
+      );
     }
-  };
+  }, []);
 
   const handleMapReady = useCallback(() => {
     mapReady.current = true;
@@ -92,61 +172,84 @@ export function FeedMapaScreen() {
       pendingMapFocus.current = null;
       focarNoMapa(focus.lat, focus.lng);
     }
-  }, []);
+  }, [focarNoMapa]);
 
-  // Quando clicamos no pino no mapa
   const handleMarkerSelect = (id: string) => {
-    const index = ocorrenciasMock.findIndex((item) => item.id === id);
+    // ALTERADO: procura o marcador na lista atual.
+    const index = ocorrenciasRef.current.findIndex((item) => item.id === id);
     if (index === -1) return;
 
-    // Bloqueia a atualização do mapa enquanto rola a lista
     isAutoScrolling.current = true;
-
-    // Abre o BottomSheet (se já estiver aberto, ele ignora)
     bottomSheetRef.current?.snapToIndex(0);
 
-    // Define o tempo de espera: Se já estava aberto, rola rápido. Se estava fechado, espera ele subir (400ms)
     const delay = sheetOpen ? 50 : 400;
-
     setSheetOpen(true);
 
     setTimeout(() => {
-      // Faz o scroll na FlatList
-      if (flatListRef.current) {
-        flatListRef.current.scrollToIndex({
-          index,
-          animated: true,
-          viewPosition: 0, // Garante que o card pare exatamente no topo
-        });
-      }
+      flatListRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0,
+      });
 
-      // Libera a flag de bloqueio após a animação de scroll da lista terminar
       setTimeout(() => {
         isAutoScrolling.current = false;
       }, 600);
     }, delay);
   };
 
-  const handleViewableItemsChanged = useCallback(({ viewableItems }: any) => {
-    // SE ESTIVER ROLANDO PELO CÓDIGO (clique no pino), IGNORA
-    if (isAutoScrolling.current || viewableItems.length === 0) return;
+  const handleViewableItemsChanged = useCallback(
+    ({ viewableItems }: any) => {
+      if (isAutoScrolling.current || viewableItems.length === 0) return;
 
-    const itemVisivel = viewableItems[0].item as OcorrenciaType;
-    focarNoMapa(itemVisivel?.latitude, itemVisivel?.longitude);
-  }, []);
+      const itemVisivel = viewableItems[0].item as OcorrenciaType;
+      focarNoMapa(itemVisivel.latitude, itemVisivel.longitude);
+    },
+    [focarNoMapa],
+  );
 
-  const handleScrollEnd = useCallback((event: any) => {
-    if (isAutoScrolling.current) return;
+  const handleScrollEnd = useCallback(
+    (event: any) => {
+      if (isAutoScrolling.current) return;
 
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const reachedEnd =
-      contentOffset.y + layoutMeasurement.height >= contentSize.height - 8;
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      const reachedEnd =
+        contentOffset.y + layoutMeasurement.height >= contentSize.height - 8;
 
-    if (reachedEnd) {
-      const lastOccurrence = ocorrenciasMock[ocorrenciasMock.length - 1];
-      focarNoMapa(lastOccurrence.latitude, lastOccurrence.longitude);
-    }
-  }, []);
+      if (reachedEnd) {
+        // ALTERADO: consulta a lista atual e trata uma lista vazia.
+        const lista = ocorrenciasRef.current;
+        const ultimaOcorrencia = lista[lista.length - 1];
+
+        if (ultimaOcorrencia) {
+          focarNoMapa(
+            ultimaOcorrencia.latitude,
+            ultimaOcorrencia.longitude,
+          );
+        }
+      }
+    },
+    [focarNoMapa],
+  );
+
+  // ACRESCENTADO: aguarda a leitura antes de montar o mapa.
+  if (carregando || erroCarregamento) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text>
+          {erroCarregamento ?? "Carregando ocorrências do mapa..."}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -161,17 +264,18 @@ export function FeedMapaScreen() {
           onUserLocationChange={setUserLocation}
           onMapReady={handleMapReady}
           showFab={!sheetOpen}
-          list={ocorrenciasMock}
+          // ALTERADO: envia ao mapa os dados carregados e atualizados.
+          list={ocorrencias}
         />
 
         <BottomSheet
           ref={bottomSheetRef}
           index={-1}
           snapPoints={snapPoints}
-          enablePanDownToClose={true}
-          enableContentPanningGesture={false} // <-- MÁGICA: Impede a aba de subir para 100% quando rola a lista
+          enablePanDownToClose
+          enableContentPanningGesture={false}
           onChange={(index) => {
-            if (index === -1) setSheetOpen(false);
+            setSheetOpen(index !== -1);
           }}
         >
           <View
@@ -190,12 +294,13 @@ export function FeedMapaScreen() {
 
           <BottomSheetFlatList
             ref={flatListRef}
-            data={ocorrenciasMock}
+            // ALTERADO: os cartões usam a mesma lista enviada ao mapa.
+            data={ocorrencias}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{
               paddingHorizontal: 16,
               backgroundColor: colors.background,
-              paddingBottom: windowHeight - CARD_HEIGHT,
+              paddingBottom: Math.max(0, windowHeight - CARD_HEIGHT),
             }}
             style={
               Platform.OS === "web"
@@ -212,6 +317,10 @@ export function FeedMapaScreen() {
             })}
             onViewableItemsChanged={handleViewableItemsChanged}
             onMomentumScrollEnd={handleScrollEnd}
+            // ACRESCENTADO: retorno para uma lista sem ocorrências.
+            ListEmptyComponent={
+              <Text>Nenhuma ocorrência disponível.</Text>
+            }
             renderItem={({ item }: { item: OcorrenciaType }) => (
               <View
                 style={[
@@ -232,12 +341,14 @@ export function FeedMapaScreen() {
                     source={{ uri: item.imagem }}
                     style={{ height: 112 }}
                   />
+
                   <Card.Title
                     title={item.endereco}
                     subtitleVariant="titleSmall"
                     titleVariant="titleMedium"
                     subtitle={`Status: ${getStatusLabel(item.status)}`}
                   />
+
                   <Card.Content
                     style={{
                       paddingBottom: 8,
@@ -245,20 +356,12 @@ export function FeedMapaScreen() {
                       flex: 1,
                     }}
                   >
-                    <Text
-                      style={{
-                        overflow: "hidden",
-                      }}
-                    >
+                    <Text style={{ overflow: "hidden" }}>
                       {item.descricao}
                     </Text>
-                    <View
-                      style={{
-                        alignItems: "flex-end",
-                      }}
-                    >
+
+                    <View style={{ alignItems: "flex-end" }}>
                       <Text style={{ textAlign: "right" }}>
-                        há{" "}
                         {formatDistance(
                           userLocation
                             ? calculateDistanceInMeters(userLocation, {
