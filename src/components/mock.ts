@@ -23,6 +23,26 @@ export const ocorrenciasMock: OcorrenciaType[] = [
     status: "EM_ANALISE",
     endereco: "Rua Plácido de Castro, 300 - Exposição",
     imagem: "https://picsum.photos/id/122/500/300", // Rua escura/noite
+
+    // ACRESCENTADO: histórico fictício desta ocorrência.
+    // A lista segue a ordem da alteração mais antiga para a mais recente.
+    // O último novoStatus corresponde ao status atual: EM_ANALISE.
+    historicoStatus: [
+      {
+        // ACRESCENTADO: registro inicial, sem status anterior.
+        statusAnterior: null,
+        novoStatus: "ENVIADA",
+
+        // ACRESCENTADO: data ISO com fuso horário explícito.
+        alteradoEm: "2026-09-21T19:45:00-03:00",
+      },
+      {
+        // ACRESCENTADO: exemplo de mudança de status.
+        statusAnterior: "ENVIADA",
+        novoStatus: "EM_ANALISE",
+        alteradoEm: "2026-09-22T09:00:00-03:00",
+      },
+    ],
   },
   {
     id: "3",
