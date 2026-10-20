@@ -1,4 +1,4 @@
-import type { OcorrenciaType, StatusOcorrencia } from "../types/ocorrencia";
+import type { OcorrenciaType } from "../types/ocorrencia";
 
 const diasAtras = (dias: number, horas = 10): Date => {
   const data = new Date();
@@ -17,7 +17,6 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.17911,
     criadaEm: diasAtras(0, 8),
     perigosa: true,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco: "Av. Júlio de Castilhos, 1500 - Centro",
     imagem: "https://picsum.photos/id/1044/500/300",
@@ -31,12 +30,11 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.175034,
     criadaEm: diasAtras(2, 19),
     perigosa: false,
-    status: "EM_ANALISE",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(1, 9),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
     ],
     endereco: "Rua Plácido de Castro, 300 - Exposição",
@@ -52,17 +50,16 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.185077,
     criadaEm: diasAtras(5, 6),
     perigosa: true,
-    status: "EM_ANDAMENTO",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(4, 8),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
       {
         statusAnterior: "EM_ANALISE",
         alteradoEm: diasAtras(3, 10),
-        statusNovo: "EM_ANDAMENTO",
+        novoStatus: "EM_ANDAMENTO",
       },
     ],
     endereco: "Av. Rio Branco, 400 - São Pelegrino",
@@ -77,7 +74,6 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.165099,
     criadaEm: diasAtras(1, 14),
     perigosa: false,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco: "Rua Sinimbu, 2200 - Lourdes",
     imagem: "https://picsum.photos/id/175/500/300",
@@ -91,22 +87,21 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.220045,
     criadaEm: diasAtras(9, 10),
     perigosa: false,
-    status: "RESOLVIDA",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(8, 13),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
       {
         statusAnterior: "EM_ANALISE",
         alteradoEm: diasAtras(7, 8),
-        statusNovo: "EM_ANDAMENTO",
+        novoStatus: "EM_ANDAMENTO",
       },
       {
         statusAnterior: "EM_ANDAMENTO",
         alteradoEm: diasAtras(6, 16),
-        statusNovo: "RESOLVIDA",
+        novoStatus: "RESOLVIDA",
       },
     ],
     endereco: "Rua Cristiano Ramos de Oliveira, 850 - Desvio Rizzo",
@@ -121,7 +116,6 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.180066,
     criadaEm: diasAtras(0, 11),
     perigosa: true,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco: "Rua Moreira César, 1100 - Pio X",
     imagem: "https://picsum.photos/id/133/500/300",
@@ -135,17 +129,16 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.155088,
     criadaEm: diasAtras(7, 9),
     perigosa: true,
-    status: "EM_ANDAMENTO",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(6, 11),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
       {
         statusAnterior: "EM_ANALISE",
         alteradoEm: diasAtras(5, 8),
-        statusNovo: "EM_ANDAMENTO",
+        novoStatus: "EM_ANDAMENTO",
       },
     ],
     endereco: "Rua Luiz Michielon, 550 - Cruzeiro",
@@ -160,7 +153,6 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.177,
     criadaEm: diasAtras(0, 13),
     perigosa: true,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco:
       "Esquina da Rua Visconde de Pelotas com Pinheiro Machado - Centro",
@@ -175,22 +167,21 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.195511,
     criadaEm: diasAtras(12, 16),
     perigosa: true,
-    status: "RESOLVIDA",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(11, 9),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
       {
         statusAnterior: "EM_ANALISE",
         alteradoEm: diasAtras(10, 14),
-        statusNovo: "EM_ANDAMENTO",
+        novoStatus: "EM_ANDAMENTO",
       },
       {
         statusAnterior: "EM_ANDAMENTO",
         alteradoEm: diasAtras(9, 15),
-        statusNovo: "RESOLVIDA",
+        novoStatus: "RESOLVIDA",
       },
     ],
     endereco: "Rua Matteo Gianella, 120 - Santa Catarina",
@@ -205,12 +196,11 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.160012,
     criadaEm: diasAtras(4, 8),
     perigosa: true,
-    status: "EM_ANALISE",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(3, 9),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
     ],
     endereco: "BR-116, Km 160 - Galópolis",
@@ -225,7 +215,6 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.160044,
     criadaEm: diasAtras(3, 14),
     perigosa: false,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco: "Rua João Nichele, 200 - São José",
     imagem: "https://picsum.photos/id/183/500/300",
@@ -239,22 +228,21 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.120033,
     criadaEm: diasAtras(25, 10),
     perigosa: false,
-    status: "RESOLVIDA",
     historicoStatus: [
       {
         statusAnterior: "ENVIADA",
         alteradoEm: diasAtras(24, 8),
-        statusNovo: "EM_ANALISE",
+        novoStatus: "EM_ANALISE",
       },
       {
         statusAnterior: "EM_ANALISE",
         alteradoEm: diasAtras(22, 9),
-        statusNovo: "EM_ANDAMENTO",
+        novoStatus: "EM_ANDAMENTO",
       },
       {
         statusAnterior: "EM_ANDAMENTO",
         alteradoEm: diasAtras(20, 17),
-        statusNovo: "RESOLVIDA",
+        novoStatus: "RESOLVIDA",
       },
     ],
     endereco: "Av. Rio Branco, 3000 - Ana Rech",
@@ -269,19 +257,11 @@ const ocorrenciasIniciais: OcorrenciaType[] = [
     longitude: -51.190022,
     criadaEm: new Date(),
     perigosa: true,
-    status: "ENVIADA",
     historicoStatus: [],
     endereco: "Rua Ludovico Cavinato, 1000 - Nossa Sra. da Saúde",
     imagem: "https://picsum.photos/id/318/500/300",
     fotoUrl: "https://picsum.photos/id/318/500/300",
   },
 ];
-
-const statusAnteriores: Record<StatusOcorrencia, StatusOcorrencia[]> = {
-  ENVIADA: [],
-  EM_ANALISE: ["ENVIADA"],
-  EM_ANDAMENTO: ["ENVIADA", "EM_ANALISE"],
-  RESOLVIDA: ["ENVIADA", "EM_ANALISE", "EM_ANDAMENTO"],
-};
 
 export const ocorrenciasMock = ocorrenciasIniciais;

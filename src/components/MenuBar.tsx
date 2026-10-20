@@ -11,7 +11,7 @@ import { StyleSheet } from "react-native";
 import { BottomNavigation, Text } from "react-native-paper";
 import { FeedMapaScreen } from "../screens/FeedMapa/FeedMapaScreen";
 // Mere Helen: importa a nova tela de lista de ocorrências.
-import { AdminScreen } from "../screens/Dashboard/DashboardScreen";
+import { DashboardScreen } from "../screens/Dashboard/DashboardScreen";
 import { ListaOcorrenciasScreen } from "../screens/ListaOcorrenciasScreen";
 import { RegistroOcorrenciaScreen } from "../screens/RegistroOcorrenciaScreen";
 import { colors } from "../theme/theme";
@@ -104,7 +104,7 @@ export const MenuBar = () => {
       case "notifications":
         return <PerfilScreen />;
       case "dashboard":
-        return <AdminScreen />;
+        return <DashboardScreen />;
       case "perfil":
         return <PerfilScreen />;
       default:

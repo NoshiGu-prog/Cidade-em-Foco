@@ -184,8 +184,13 @@ export function RegistroOcorrenciaScreen({
     const ocorrencia: OcorrenciaType = {
       id: `local-${Date.now()}`,
       ...data,
-      status: "ENVIADA",
-      historicoStatus: [],
+      historicoStatus: [
+        {
+          statusAnterior: null,
+          novoStatus: "ENVIADA",
+          alteradoEm: new Date(),
+        },
+      ],
       criadaEm: new Date(),
       imagem: fotoUri,
       fotoUrl: fotoUri,

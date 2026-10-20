@@ -8,6 +8,7 @@ import {
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Card, Text } from "react-native-paper";
 import { Text as SvgText } from "react-native-svg";
+import { obterStatusAtual } from "../services/historicoStatus";
 import { colors } from "../theme/theme";
 import {
   TIPOS_OCORRENCIA,
@@ -46,10 +47,11 @@ function extrairBairro(endereco: string) {
 
 function contarStatus(
   ocorrencias: OcorrenciaType[],
-  status: OcorrenciaType["status"],
+  status: import("../types/ocorrencia").StatusOcorrencia,
 ) {
-  return ocorrencias.filter((ocorrencia) => ocorrencia.status === status)
-    .length;
+  return ocorrencias.filter(
+    (ocorrencia) => obterStatusAtual(ocorrencia) === status,
+  ).length;
 }
 
 function formatarDuracao(horas: number) {
@@ -103,7 +105,7 @@ export function AdminScreen({
     >();
     recentes.forEach((ocorrencia) => {
       const resolucao = ocorrencia.historicoStatus.find(
-        (alteracao) => alteracao.statusNovo === "RESOLVIDA",
+        (alteracao) => alteracao.novoStatus === "RESOLVIDA",
       );
       if (!resolucao) return;
 
@@ -152,7 +154,7 @@ export function AdminScreen({
   }, [ocorrencias]);
 
   const totalAbertas = dados.recentes.filter(
-    (ocorrencia) => ocorrencia.status !== "RESOLVIDA",
+    (ocorrencia) => obterStatusAtual(ocorrencia) !== "RESOLVIDA",
   ).length;
   const totalPerigosas = dados.recentes.filter(
     (ocorrencia) => ocorrencia.perigosa,

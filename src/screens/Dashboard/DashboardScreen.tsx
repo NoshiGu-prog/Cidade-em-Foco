@@ -4,7 +4,9 @@ import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Card, Text } from "react-native-paper";
 import { Text as SvgText } from "react-native-svg";
 import { ocorrenciasMock } from "../../components/mock";
+import { obterStatusAtual } from "../../services/historicoStatus";
 import {
+  StatusOcorrencia,
   TIPOS_OCORRENCIA,
   type OcorrenciaType,
   type TipoOcorrencia,
@@ -40,12 +42,17 @@ function extrairBairro(endereco: string) {
     : "Não informado";
 }
 
-function contarStatus(
-  ocorrencias: OcorrenciaType[],
-  status: OcorrenciaType["status"],
-) {
-  return ocorrencias.filter((ocorrencia) => ocorrencia.status === status)
-    .length;
+function contarStatus(ocorrencias: OcorrenciaType[], status: StatusOcorrencia) {
+  console.log(
+    "Contando status:",
+    status,
+    "em",
+    ocorrencias.length,
+    "ocorrências",
+  );
+  return ocorrencias.filter(
+    (ocorrencia) => obterStatusAtual(ocorrencia) === status,
+  ).length;
 }
 
 function formatarDuracao(horas: number) {
@@ -58,7 +65,7 @@ function formatarDuracao(horas: number) {
   return `${formatado} ${emDias ? "dias" : "h"}`;
 }
 
-export function AdminScreen() {
+export function DashboardScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const ocorrencias = ocorrenciasMock;
 
@@ -96,7 +103,7 @@ export function AdminScreen() {
     >();
     recentes.forEach((ocorrencia) => {
       const resolucao = ocorrencia.historicoStatus.find(
-        (alteracao) => alteracao.statusNovo === "RESOLVIDA",
+        (alteracao) => alteracao.novoStatus === "RESOLVIDA",
       );
       if (!resolucao) return;
 
@@ -145,7 +152,7 @@ export function AdminScreen() {
   }, [ocorrencias]);
 
   const totalAbertas = dados.recentes.filter(
-    (ocorrencia) => ocorrencia.status !== "RESOLVIDA",
+    (ocorrencia) => obterStatusAtual(ocorrencia) !== "RESOLVIDA",
   ).length;
   const totalPerigosas = dados.recentes.filter(
     (ocorrencia) => ocorrencia.perigosa,
