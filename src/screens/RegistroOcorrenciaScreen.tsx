@@ -2,20 +2,26 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Camera, MapPin, Sparkles } from "lucide-react-native";
-import { gerarDescricaoComIa } from "../services/descricaoIa";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Switch, Text } from "react-native-paper";
 import { useAppSnackbar } from "../components/AppSnackbar";
 import { InputText } from "../components/inputs/TextInput";
+import { gerarDescricaoComIa } from "../services/descricaoIa";
 import { colors } from "../theme/theme";
+import type { OcorrenciaType } from "../types/ocorrencia";
+import { TIPOS_OCORRENCIA } from "../types/ocorrencia";
 import {
   ocorrenciaSchema,
   type OcorrenciaFormData,
 } from "../validation/schemas";
 
-export function RegistroOcorrenciaScreen() {
+export function RegistroOcorrenciaScreen({
+  onRegister,
+}: {
+  onRegister: (ocorrencia: OcorrenciaType) => void;
+}) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
     latitude: number;
@@ -30,6 +36,7 @@ export function RegistroOcorrenciaScreen() {
     resolver: zodResolver(ocorrenciaSchema),
     defaultValues: {
       descricao: "",
+      tipo: "OUTROS",
       perigosa: false,
     },
   });
@@ -137,31 +144,31 @@ export function RegistroOcorrenciaScreen() {
   };
 
   const melhorarDescricao = async () => {
-  const descricaoAtual = form.getValues("descricao");
+    const descricaoAtual = form.getValues("descricao");
 
-  if (!descricaoAtual.trim()) {
-    showSnackbar("Informe uma descrição antes de usar a sugestão com IA.");
-    return;
-  }
+    if (!descricaoAtual.trim()) {
+      showSnackbar("Informe uma descrição antes de usar a sugestão com IA.");
+      return;
+    }
 
-  try {
-    setGerandoDescricao(true);
+    try {
+      setGerandoDescricao(true);
 
-    const sugestao = await gerarDescricaoComIa(descricaoAtual);
+      const sugestao = await gerarDescricaoComIa(descricaoAtual);
 
-    form.setValue("descricao", sugestao, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+      form.setValue("descricao", sugestao, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
 
-    showSnackbar("Sugestão aplicada. Revise o texto antes de registrar.");
-  } catch (erro) {
-    console.log("Erro ao gerar descrição:", erro);
-    showSnackbar("Não foi possível gerar uma sugestão.");
-  } finally {
-    setGerandoDescricao(false);
-  }
-};
+      showSnackbar("Sugestão aplicada. Revise o texto antes de registrar.");
+    } catch (erro) {
+      console.log("Erro ao gerar descrição:", erro);
+      showSnackbar("Não foi possível gerar uma sugestão.");
+    } finally {
+      setGerandoDescricao(false);
+    }
+  };
 
   const onSubmit = (data: OcorrenciaFormData) => {
     if (!fotoUri) {
@@ -174,15 +181,23 @@ export function RegistroOcorrenciaScreen() {
       return;
     }
 
-    console.log("Ocorrência válida", {
+    const ocorrencia: OcorrenciaType = {
+      id: `local-${Date.now()}`,
       ...data,
-      fotoUri,
+      status: "ENVIADA",
+      historicoStatus: [],
+      criadaEm: new Date(),
+      imagem: fotoUri,
+      fotoUrl: fotoUri,
       latitude: localizacao.latitude,
       longitude: localizacao.longitude,
-      endereco,
-    });
+      endereco: endereco ?? "Endereço não informado",
+    };
 
-    showSnackbar("Dados da ocorrência validados com sucesso!");
+    console.log("Ocorrência válida", ocorrencia);
+
+    onRegister(ocorrencia);
+    showSnackbar("Ocorrência registrada com sucesso!");
   };
 
   return (
@@ -268,6 +283,38 @@ export function RegistroOcorrenciaScreen() {
               Detalhes
             </Text>
 
+            <Text style={styles.fieldLabel}>Tipo do problema</Text>
+            <Controller
+              control={control}
+              name="tipo"
+              render={({ field, fieldState }) => (
+                <>
+                  <View style={styles.typeOptions}>
+                    {TIPOS_OCORRENCIA.map((tipo) => (
+                      <Button
+                        key={tipo.value}
+                        mode={
+                          field.value === tipo.value ? "contained" : "outlined"
+                        }
+                        compact
+                        onPress={() => field.onChange(tipo.value)}
+                        accessibilityState={{
+                          selected: field.value === tipo.value,
+                        }}
+                      >
+                        {tipo.label}
+                      </Button>
+                    ))}
+                  </View>
+                  {fieldState.error && (
+                    <Text style={styles.errorText}>
+                      {fieldState.error.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+
             <InputText
               name="descricao"
               label="Descrição"
@@ -276,15 +323,15 @@ export function RegistroOcorrenciaScreen() {
             />
 
             <Button
-             mode="outlined"
-             onPress={melhorarDescricao}
-             loading={gerandoDescricao}
-             disabled={gerandoDescricao}
-             icon={({ color, size }) => (
-               <Sparkles color={color} size={size} />
-             )}
+              mode="outlined"
+              onPress={melhorarDescricao}
+              loading={gerandoDescricao}
+              disabled={gerandoDescricao}
+              icon={({ color, size }) => <Sparkles color={color} size={size} />}
             >
-              {gerandoDescricao ? "Gerando sugestão..." : "Melhorar descrição com IA"}
+              {gerandoDescricao
+                ? "Gerando sugestão..."
+                : "Melhorar descrição com IA"}
             </Button>
 
             <View style={styles.dangerRow}>
@@ -357,6 +404,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.brandBlue,
     fontWeight: "bold",
+  },
+
+  fieldLabel: {
+    color: "#5f6368",
+    fontWeight: "600",
+  },
+
+  typeOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
 
   image: {

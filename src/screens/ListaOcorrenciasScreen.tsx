@@ -47,13 +47,17 @@ function OcorrenciaCard({ item }: { item: OcorrenciaType }) {
   );
 }
 
-export function ListaOcorrenciasScreen() {
+export function ListaOcorrenciasScreen({
+  ocorrencias: todasOcorrencias = ocorrenciasMock,
+}: {
+  ocorrencias?: OcorrenciaType[];
+}) {
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<StatusOcorrencia | "TODAS">("TODAS");
 
   const ocorrencias = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
-    return ocorrenciasMock
+    return todasOcorrencias
       .filter(
         (item) =>
           (status === "TODAS" || item.status === status) &&
@@ -66,7 +70,7 @@ export function ListaOcorrenciasScreen() {
         (a, b) =>
           new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
       );
-  }, [busca, status]);
+  }, [busca, status, todasOcorrencias]);
 
   return (
     <View style={styles.page}>
@@ -103,7 +107,8 @@ export function ListaOcorrenciasScreen() {
               ))}
             </View>
             <Text variant="bodySmall">
-              {ocorrencias.length} {ocorrencias.length === 1 ? "ocorrência" : "ocorrências"}
+              {ocorrencias.length}{" "}
+              {ocorrencias.length === 1 ? "ocorrência" : "ocorrências"}
             </Text>
           </View>
         }
@@ -117,7 +122,14 @@ export function ListaOcorrenciasScreen() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
-  list: { padding: 16, paddingBottom: 32, gap: 16, maxWidth: 720, width: "100%", alignSelf: "center" },
+  list: {
+    padding: 16,
+    paddingBottom: 32,
+    gap: 16,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
+  },
   header: { gap: 14, marginBottom: 4 },
   title: { color: colors.brandBlue, fontWeight: "bold" },
   search: { backgroundColor: "white" },
@@ -125,10 +137,20 @@ const styles = StyleSheet.create({
   card: { backgroundColor: "white" },
   image: { height: 150 },
   cardContent: { gap: 10, paddingTop: 14, paddingBottom: 16 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", gap: 8, alignItems: "flex-start" },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+    alignItems: "flex-start",
+  },
   address: { color: colors.brandBlue, fontWeight: "bold", flex: 1 },
   danger: { color: "#b3261e", fontWeight: "bold" },
-  cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
   status: { color: colors.brandGreen, fontWeight: "bold" },
   empty: { textAlign: "center", marginTop: 32 },
 });
