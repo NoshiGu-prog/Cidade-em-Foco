@@ -4,5 +4,5 @@
     "strict": true,
     "jsx": "react-jsx"
   },
-  "exclude": ["backend", "node_modules"]
+  "exclude": ["backend", "node_modules", "dist"]
 }

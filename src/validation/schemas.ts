@@ -1,5 +1,6 @@
 import { cpf } from "cpf-cnpj-validator";
 import { z } from "zod";
+import { TIPO_OCORRENCIA_VALUES } from "../types/ocorrencia";
 
 export const loginSchema = z.object({
   email: z.string().trim().min(1, "Informe um e-mail válido"),
@@ -56,6 +57,7 @@ export const cadastroSchema = z
 
 export const ocorrenciaSchema = z.object({
   descricao: z.string().trim().min(10, "Descreva a ocorrência com detalhes"),
+  tipo: z.enum(TIPO_OCORRENCIA_VALUES),
   perigosa: z.boolean(),
 });
 
