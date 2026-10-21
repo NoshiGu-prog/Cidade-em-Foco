@@ -18,6 +18,7 @@ import { colors } from "../theme/theme";
 import type { OcorrenciaType } from "../types/ocorrencia";
 import { RouteType } from "../types/routes";
 import { ocorrenciasMock } from "./mock";
+import { AcompanhamentoStatusScreen } from "../screens/AcompanhamentoStatusScreen";
 
 const PerfilScreen = () => <Text>Perfil</Text>;
 
@@ -62,7 +63,7 @@ export const MenuBar = () => {
     },
     {
       key: "notifications",
-      title: "Alertas",
+      title: "Status",
       focusedIcon: ({ color, size }: { color: string; size: number }) => (
         <Bell color={color} size={size + 6} />
       ),
@@ -102,7 +103,9 @@ export const MenuBar = () => {
       case "registrar":
         return <RegistroOcorrenciaScreen onRegister={adicionarOcorrencia} />;
       case "notifications":
-        return <PerfilScreen />;
+        return (
+              <AcompanhamentoStatusScreen ocorrencias={ocorrencias} />
+       );
       case "dashboard":
         return <DashboardScreen />;
       case "perfil":
