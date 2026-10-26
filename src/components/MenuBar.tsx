@@ -1,17 +1,34 @@
-import { Bell, Map, Newspaper, Plus, UserRound } from "lucide-react-native";
+import {
+  Bell,
+  ChartColumnIncreasing,
+  Map,
+  Newspaper,
+  Plus,
+  UserRound,
+} from "lucide-react-native";
 import * as React from "react";
 import { StyleSheet } from "react-native";
 import { BottomNavigation, Text } from "react-native-paper";
 import { FeedMapaScreen } from "../screens/FeedMapa/FeedMapaScreen";
 // Mere Helen: importa a nova tela de lista de ocorrências.
+import { DashboardScreen } from "../screens/Dashboard/DashboardScreen";
 import { ListaOcorrenciasScreen } from "../screens/ListaOcorrenciasScreen";
 import { RegistroOcorrenciaScreen } from "../screens/RegistroOcorrenciaScreen";
 import { colors } from "../theme/theme";
+import type { OcorrenciaType } from "../types/ocorrencia";
+import { RouteType } from "../types/routes";
+import { ocorrenciasMock } from "./mock";
+import { AcompanhamentoStatusScreen } from "../screens/AcompanhamentoStatusScreen";
 
 const PerfilScreen = () => <Text>Perfil</Text>;
 
 export const MenuBar = () => {
   const [index, setIndex] = React.useState(0);
+  const [ocorrencias, setOcorrencias] = React.useState(ocorrenciasMock);
+
+  const adicionarOcorrencia = (ocorrencia: OcorrenciaType) => {
+    setOcorrencias((atuais) => [ocorrencia, ...atuais]);
+  };
 
   const routes = [
     {
@@ -45,13 +62,23 @@ export const MenuBar = () => {
       ),
     },
     {
-      key: "inicio",
-      title: "Início",
+      key: "notifications",
+      title: "Status",
       focusedIcon: ({ color, size }: { color: string; size: number }) => (
         <Bell color={color} size={size + 6} />
       ),
       unfocusedIcon: ({ color, size }: { color: string; size: number }) => (
         <Bell color={color} size={size} />
+      ),
+    },
+    {
+      key: "dashboard",
+      title: "Dashboard",
+      focusedIcon: ({ color, size }: { color: string; size: number }) => (
+        <ChartColumnIncreasing color={color} size={size + 6} />
+      ),
+      unfocusedIcon: ({ color, size }: { color: string; size: number }) => (
+        <ChartColumnIncreasing color={color} size={size} />
       ),
     },
     {
@@ -66,17 +93,21 @@ export const MenuBar = () => {
     },
   ];
 
-  const renderScene = ({ route }: { route: { key: string } }) => {
+  const renderScene = ({ route }: { route: { key: RouteType } }) => {
     switch (route.key) {
       case "feed":
         // Mere Helen: o Feed agora mostra a lista de ocorrências.
-        return <ListaOcorrenciasScreen />;
+        return <ListaOcorrenciasScreen ocorrencias={ocorrencias} />;
       case "mapa":
         return <FeedMapaScreen />;
       case "registrar":
-        return <RegistroOcorrenciaScreen />;
-      case "inicio":
-        return <FeedMapaScreen />;
+        return <RegistroOcorrenciaScreen onRegister={adicionarOcorrencia} />;
+      case "notifications":
+        return (
+              <AcompanhamentoStatusScreen ocorrencias={ocorrencias} />
+       );
+      case "dashboard":
+        return <DashboardScreen />;
       case "perfil":
         return <PerfilScreen />;
       default:
@@ -93,7 +124,7 @@ export const MenuBar = () => {
         },
       }}
       barStyle={styles.bottomBar}
-      navigationState={{ index, routes }}
+      navigationState={{ index, routes: routes as never }}
       onIndexChange={setIndex}
       renderScene={renderScene}
     />

@@ -1,150 +1,267 @@
-import { OcorrenciaType } from "../types/ocorrencia";
+import type { OcorrenciaType } from "../types/ocorrencia";
 
-export const ocorrenciasMock: OcorrenciaType[] = [
+const diasAtras = (dias: number, horas = 10): Date => {
+  const data = new Date();
+  data.setDate(data.getDate() - dias);
+  data.setHours(horas, 0, 0, 0);
+  return data;
+};
+
+const ocorrenciasIniciais: OcorrenciaType[] = [
   {
     id: "1",
     descricao:
       "Buraco profundo na faixa da direita, causando danos aos veículos",
+    tipo: "BURACO",
     latitude: -29.168341,
     longitude: -51.17911,
-    criadaEm: new Date("2026-09-23T08:30:00"),
+    criadaEm: diasAtras(0, 8),
     perigosa: true,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco: "Av. Júlio de Castilhos, 1500 - Centro",
-    imagem: "https://picsum.photos/id/1044/500/300", // Rua/Asfalto
+    imagem: "https://picsum.photos/id/1044/500/300",
+    fotoUrl: "https://picsum.photos/id/1044/500/300",
   },
   {
     id: "2",
     descricao: "Poste com lâmpada queimada há mais de uma semana",
+    tipo: "ILUMINACAO",
     latitude: -29.173012,
     longitude: -51.175034,
-    criadaEm: new Date("2026-09-21T19:45:00"),
+    criadaEm: diasAtras(2, 19),
     perigosa: false,
-    status: "EM_ANALISE",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(1, 9),
+        novoStatus: "EM_ANALISE",
+      },
+    ],
     endereco: "Rua Plácido de Castro, 300 - Exposição",
-    imagem: "https://picsum.photos/id/122/500/300", // Rua escura/noite
+    imagem: "https://picsum.photos/id/122/500/300",
+    fotoUrl: "https://picsum.photos/id/122/500/300",
   },
   {
     id: "3",
     descricao:
       "Árvore de grande porte caiu sobre o muro da praça após o temporal",
+    tipo: "ARBORIZACAO",
     latitude: -29.167055,
     longitude: -51.185077,
-    criadaEm: new Date("2026-09-22T06:15:00"),
+    criadaEm: diasAtras(5, 6),
     perigosa: true,
-    status: "EM_ANDAMENTO",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(4, 8),
+        novoStatus: "EM_ANALISE",
+      },
+      {
+        statusAnterior: "EM_ANALISE",
+        alteradoEm: diasAtras(3, 10),
+        novoStatus: "EM_ANDAMENTO",
+      },
+    ],
     endereco: "Av. Rio Branco, 400 - São Pelegrino",
-    imagem: "https://picsum.photos/id/293/500/300", // Árvores/Natureza
+    imagem: "https://picsum.photos/id/293/500/300",
+    fotoUrl: "https://picsum.photos/id/293/500/300",
   },
   {
     id: "4",
-    descricao: "Vazamento de água limpa no meio fio",
+    descricao: "Vazamento de água limpa no meio-fio",
+    tipo: "SANEAMENTO",
     latitude: -29.171033,
     longitude: -51.165099,
-    criadaEm: new Date("2026-09-20T14:20:00"),
+    criadaEm: diasAtras(1, 14),
     perigosa: false,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco: "Rua Sinimbu, 2200 - Lourdes",
-    imagem: "https://picsum.photos/id/175/500/300", // Rua da cidade
+    imagem: "https://picsum.photos/id/175/500/300",
+    fotoUrl: "https://picsum.photos/id/175/500/300",
   },
   {
     id: "5",
     descricao: "Descarte irregular de lixo e entulho em terreno baldio",
+    tipo: "LIMPEZA",
     latitude: -29.185012,
     longitude: -51.220045,
-    criadaEm: new Date("2026-09-18T10:10:00"),
+    criadaEm: diasAtras(9, 10),
     perigosa: false,
-    status: "RESOLVIDA",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(8, 13),
+        novoStatus: "EM_ANALISE",
+      },
+      {
+        statusAnterior: "EM_ANALISE",
+        alteradoEm: diasAtras(7, 8),
+        novoStatus: "EM_ANDAMENTO",
+      },
+      {
+        statusAnterior: "EM_ANDAMENTO",
+        alteradoEm: diasAtras(6, 16),
+        novoStatus: "RESOLVIDA",
+      },
+    ],
     endereco: "Rua Cristiano Ramos de Oliveira, 850 - Desvio Rizzo",
-    imagem: "https://picsum.photos/id/195/500/300", // Terreno/Estrutura
+    imagem: "https://picsum.photos/id/195/500/300",
+    fotoUrl: "https://picsum.photos/id/195/500/300",
   },
   {
     id: "6",
     descricao: "Fio de alta tensão rompido e caído na calçada",
+    tipo: "ELETRICA",
     latitude: -29.160021,
     longitude: -51.180066,
-    criadaEm: new Date("2026-09-23T11:05:00"),
+    criadaEm: diasAtras(0, 11),
     perigosa: true,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco: "Rua Moreira César, 1100 - Pio X",
-    imagem: "https://picsum.photos/id/133/500/300", // Carros e postes urbanos
+    imagem: "https://picsum.photos/id/133/500/300",
+    fotoUrl: "https://picsum.photos/id/133/500/300",
   },
   {
     id: "7",
     descricao: "Tampa de bueiro roubada, risco de queda para pedestres",
+    tipo: "SANEAMENTO",
     latitude: -29.178044,
     longitude: -51.155088,
-    criadaEm: new Date("2026-09-19T09:30:00"),
+    criadaEm: diasAtras(7, 9),
     perigosa: true,
-    status: "EM_ANDAMENTO",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(6, 11),
+        novoStatus: "EM_ANALISE",
+      },
+      {
+        statusAnterior: "EM_ANALISE",
+        alteradoEm: diasAtras(5, 8),
+        novoStatus: "EM_ANDAMENTO",
+      },
+    ],
     endereco: "Rua Luiz Michielon, 550 - Cruzeiro",
-    imagem: "https://picsum.photos/id/164/500/300", // Detalhe de rua
+    imagem: "https://picsum.photos/id/164/500/300",
+    fotoUrl: "https://picsum.photos/id/164/500/300",
   },
   {
     id: "8",
     descricao: "Semáforo piscando no amarelo o dia todo, trânsito perigoso",
+    tipo: "TRANSITO",
     latitude: -29.1645,
     longitude: -51.177,
-    criadaEm: new Date("2026-09-23T13:45:00"),
+    criadaEm: diasAtras(0, 13),
     perigosa: true,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco:
       "Esquina da Rua Visconde de Pelotas com Pinheiro Machado - Centro",
-    imagem: "https://picsum.photos/id/274/500/300", // Luzes da cidade
+    imagem: "https://picsum.photos/id/274/500/300",
+    fotoUrl: "https://picsum.photos/id/274/500/300",
   },
   {
     id: "9",
-    descricao: "Foco de dengue: Pneus acumulando água da chuva",
+    descricao: "Foco de dengue: pneus acumulando água da chuva",
+    tipo: "OUTROS",
     latitude: -29.160533,
     longitude: -51.195511,
-    criadaEm: new Date("2026-09-15T16:00:00"),
+    criadaEm: diasAtras(12, 16),
     perigosa: true,
-    status: "RESOLVIDA",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(11, 9),
+        novoStatus: "EM_ANALISE",
+      },
+      {
+        statusAnterior: "EM_ANALISE",
+        alteradoEm: diasAtras(10, 14),
+        novoStatus: "EM_ANDAMENTO",
+      },
+      {
+        statusAnterior: "EM_ANDAMENTO",
+        alteradoEm: diasAtras(9, 15),
+        novoStatus: "RESOLVIDA",
+      },
+    ],
     endereco: "Rua Matteo Gianella, 120 - Santa Catarina",
-    imagem: "https://picsum.photos/id/1064/500/300", // Rua/Calçada
+    imagem: "https://picsum.photos/id/1064/500/300",
+    fotoUrl: "https://picsum.photos/id/1064/500/300",
   },
   {
     id: "10",
     descricao: "Pequeno deslizamento de terra invadindo o acostamento",
+    tipo: "OUTROS",
     latitude: -29.230055,
     longitude: -51.160012,
-    criadaEm: new Date("2026-09-22T08:00:00"),
+    criadaEm: diasAtras(4, 8),
     perigosa: true,
-    status: "EM_ANALISE",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(3, 9),
+        novoStatus: "EM_ANALISE",
+      },
+    ],
     endereco: "BR-116, Km 160 - Galópolis",
-    imagem: "https://picsum.photos/id/355/500/300", // Estrada de terra/acostamento
+    imagem: "https://picsum.photos/id/355/500/300",
+    fotoUrl: "https://picsum.photos/id/355/500/300",
   },
   {
     id: "11",
-    descricao: "Placa de 'PARE' derrubada na esquina",
+    descricao: "Placa de PARE derrubada na esquina",
+    tipo: "TRANSITO",
     latitude: -29.155022,
     longitude: -51.160044,
-    criadaEm: new Date("2026-09-21T14:15:00"),
+    criadaEm: diasAtras(3, 14),
     perigosa: false,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco: "Rua João Nichele, 200 - São José",
-    imagem: "https://picsum.photos/id/183/500/300", // Elementos urbanos/Veículo
+    imagem: "https://picsum.photos/id/183/500/300",
+    fotoUrl: "https://picsum.photos/id/183/500/300",
   },
   {
     id: "12",
     descricao: "Solicitação de pintura de faixa de pedestres apagada",
+    tipo: "TRANSITO",
     latitude: -29.100088,
     longitude: -51.120033,
-    criadaEm: new Date("2026-08-30T10:00:00"),
+    criadaEm: diasAtras(25, 10),
     perigosa: false,
-    status: "RESOLVIDA",
+    historicoStatus: [
+      {
+        statusAnterior: "ENVIADA",
+        alteradoEm: diasAtras(24, 8),
+        novoStatus: "EM_ANALISE",
+      },
+      {
+        statusAnterior: "EM_ANALISE",
+        alteradoEm: diasAtras(22, 9),
+        novoStatus: "EM_ANDAMENTO",
+      },
+      {
+        statusAnterior: "EM_ANDAMENTO",
+        alteradoEm: diasAtras(20, 17),
+        novoStatus: "RESOLVIDA",
+      },
+    ],
     endereco: "Av. Rio Branco, 3000 - Ana Rech",
-    imagem: "https://picsum.photos/id/1055/500/300", // Crossover/Cena urbana
+    imagem: "https://picsum.photos/id/1055/500/300",
+    fotoUrl: "https://picsum.photos/id/1055/500/300",
   },
   {
     id: "13",
     descricao: "Poste de madeira inclinado, risco de queda iminente",
+    tipo: "ELETRICA",
     latitude: -29.145066,
     longitude: -51.190022,
-    criadaEm: new Date("2026-09-23T15:20:00"),
+    criadaEm: new Date(),
     perigosa: true,
-    status: "ENVIADA",
+    historicoStatus: [],
     endereco: "Rua Ludovico Cavinato, 1000 - Nossa Sra. da Saúde",
-    imagem: "https://picsum.photos/id/318/500/300", // Paisagem com elementos verticais
+    imagem: "https://picsum.photos/id/318/500/300",
+    fotoUrl: "https://picsum.photos/id/318/500/300",
   },
 ];
+
+export const ocorrenciasMock = ocorrenciasIniciais;
