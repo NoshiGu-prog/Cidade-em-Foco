@@ -7,6 +7,7 @@ import {
   atualizarStatusOcorrencia,
   obterStatusAtual,
 } from "../services/historicoStatus";
+import { listarOcorrenciasApi } from "../services/ocorrenciasApi";
 
 // ACRESCENTADO: funções de armazenamento local.
 import {
@@ -180,40 +181,47 @@ export function ListaOcorrenciasScreen({
   // ACRESCENTADO: bloqueio imediato contra cliques simultâneos.
   const salvamentoEmCurso = useRef(false);
 
-  // ACRESCENTADO: carrega os dados uma vez ao abrir a tela.
-  useEffect(() => {
-    let ativo = true;
+// ACRESCENTADO: carrega os dados uma vez ao abrir a tela.
+useEffect(() => {
+  let ativo = true;
 
-    async function iniciar() {
-      try {
-        const dadosSalvos = await carregarOcorrencias();
+  async function iniciar() {
+  try {
+    const dadosApi = await listarOcorrenciasApi();
 
-        if (ativo) {
-          // Usa os exemplos apenas quando não existem dados salvos.
-          setListaOcorrencias(dadosSalvos ?? ocorrenciasMock);
-        }
-      } catch {
-        if (ativo) {
-          // Não substitui dados salvos quando ocorre erro de leitura.
-          setErroCarregamento(
-            "Não foi possível carregar as ocorrências. Reabra a tela para tentar novamente.",
-          );
-        }
-      } finally {
-        if (ativo) {
-          setCarregando(false);
-        }
+    if (ativo) {
+      setListaOcorrencias(dadosApi);
+    }
+  } catch (erro) {
+    console.error("Erro ao buscar ocorrências da API:", erro);
+
+    try {
+      const dadosSalvos = await carregarOcorrencias();
+
+      if (ativo) {
+        setListaOcorrencias(dadosSalvos ?? ocorrenciasMock);
+      }
+    } catch {
+      if (ativo) {
+        setErroCarregamento(
+          "Não foi possível carregar as ocorrências. Reabra a tela para tentar novamente.",
+        );
       }
     }
+  } finally {
+    if (ativo) {
+      setCarregando(false);
+    }
+  }
+}
+  
 
-    void iniciar();
+  void iniciar();
 
-    // Evita atualizar o estado caso a tela seja desmontada.
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
+  return () => {
+    ativo = false;
+  };
+}, []);
   // ALTERADO: salva a lista antes de atualizar o cartão.
   const alterarStatus = async (
     id: string,

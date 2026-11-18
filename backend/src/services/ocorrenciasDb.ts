@@ -18,27 +18,26 @@ export async function listarOcorrencias() {
     order by o.criada_em desc
   `;
 
-  return ocorrencias;
-}
+  const resultado = [];
 
-export interface NovaOcorrencia {
-  usuarioId?: string | null;
-  descricao: string;
-  tipo:
-    | "BURACO"
-    | "ILUMINACAO"
-    | "ARBORIZACAO"
-    | "SANEAMENTO"
-    | "LIMPEZA"
-    | "ELETRICA"
-    | "TRANSITO"
-    | "OUTROS";
-  fotoUrl?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  perigosa?: boolean;
-  imagem?: string | null;
-  endereco: string;
+  for (const ocorrencia of ocorrencias) {
+    const historico = await sql`
+      select
+        status_anterior,
+        novo_status,
+        alterado_em
+      from historico_status
+      where ocorrencia_id = ${ocorrencia.id}
+      order by alterado_em asc
+    `;
+
+    resultado.push({
+      ...ocorrencia,
+      historico_status: historico,
+    });
+  }
+
+  return resultado;
 }
 
 export async function criarOcorrencia(dados: NovaOcorrencia) {

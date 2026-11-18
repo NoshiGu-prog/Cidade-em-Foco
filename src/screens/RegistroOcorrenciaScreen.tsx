@@ -16,6 +16,7 @@ import {
   ocorrenciaSchema,
   type OcorrenciaFormData,
 } from "../validation/schemas";
+import { criarOcorrenciaApi } from "../services/ocorrenciasApi";
 
 export function RegistroOcorrenciaScreen({
   onRegister,
@@ -170,40 +171,60 @@ export function RegistroOcorrenciaScreen({
     }
   };
 
-  const onSubmit = (data: OcorrenciaFormData) => {
-    if (!fotoUri) {
-      showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
-      return;
-    }
+  const onSubmit = async (data: OcorrenciaFormData) => {
+  if (!fotoUri) {
+    showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
+    return;
+  }
 
-    if (!localizacao) {
-      showSnackbar("Obtenha a localização antes de registrar a ocorrência.");
-      return;
-    }
+  if (!localizacao) {
+    showSnackbar("Obtenha a localização antes de registrar a ocorrência.");
+    return;
+  }
 
-    const ocorrencia: OcorrenciaType = {
-      id: `local-${Date.now()}`,
-      ...data,
-      historicoStatus: [
-        {
-          statusAnterior: null,
-          novoStatus: "ENVIADA",
-          alteradoEm: new Date(),
-        },
-      ],
-      criadaEm: new Date(),
-      imagem: fotoUri,
-      fotoUrl: fotoUri,
-      latitude: localizacao.latitude,
-      longitude: localizacao.longitude,
-      endereco: endereco ?? "Endereço não informado",
-    };
+  const ocorrencia: OcorrenciaType = {
+    id: `local-${Date.now()}`,
+    ...data,
+    historicoStatus: [
+      {
+        statusAnterior: null,
+        novoStatus: "ENVIADA",
+        alteradoEm: new Date(),
+      },
+    ],
+    criadaEm: new Date(),
+    imagem: fotoUri,
+    fotoUrl: fotoUri,
+    latitude: localizacao.latitude,
+    longitude: localizacao.longitude,
+    endereco: endereco ?? "Endereço não informado",
+  };
 
-    console.log("Ocorrência válida", ocorrencia);
+  try {
+    await criarOcorrenciaApi({
+      descricao: ocorrencia.descricao,
+      tipo: ocorrencia.tipo,
+      fotoUrl: ocorrencia.fotoUrl,
+      latitude: ocorrencia.latitude,
+      longitude: ocorrencia.longitude,
+      perigosa: ocorrencia.perigosa,
+      imagem: ocorrencia.imagem,
+      endereco: ocorrencia.endereco,
+    });
+
+    console.log("Ocorrência salva no banco com sucesso.");
 
     onRegister(ocorrencia);
+
     showSnackbar("Ocorrência registrada com sucesso!");
-  };
+  } catch (erro) {
+    console.error("Erro ao salvar ocorrência no banco:", erro);
+
+    showSnackbar(
+      "Não foi possível registrar a ocorrência no banco. Tente novamente.",
+    );
+  }
+};
 
   return (
     <FormProvider {...form}>
