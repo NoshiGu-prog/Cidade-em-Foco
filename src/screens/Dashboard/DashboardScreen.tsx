@@ -43,13 +43,6 @@ function extrairBairro(endereco: string) {
 }
 
 function contarStatus(ocorrencias: OcorrenciaType[], status: StatusOcorrencia) {
-  console.log(
-    "Contando status:",
-    status,
-    "em",
-    ocorrencias.length,
-    "ocorrências",
-  );
   return ocorrencias.filter(
     (ocorrencia) => obterStatusAtual(ocorrencia) === status,
   ).length;

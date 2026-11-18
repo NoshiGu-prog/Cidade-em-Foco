@@ -23,6 +23,8 @@ export function RegistroOcorrenciaScreen({
   onRegister: (ocorrencia: OcorrenciaType) => void;
 }) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
+  const [fotoBase64, setFotoBase64] = useState<string | null>(null);
+  const [fotoMimeType, setFotoMimeType] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
     latitude: number;
     longitude: number;
@@ -49,10 +51,14 @@ export function RegistroOcorrenciaScreen({
       mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.8,
+      base64: true,
     });
 
     if (!resultado.canceled) {
-      setFotoUri(resultado.assets[0].uri);
+      const foto = resultado.assets[0];
+      setFotoUri(foto.uri);
+      setFotoBase64(foto.base64 ?? null);
+      setFotoMimeType(foto.mimeType ?? "image/jpeg");
     }
   };
 
@@ -146,15 +152,19 @@ export function RegistroOcorrenciaScreen({
   const melhorarDescricao = async () => {
     const descricaoAtual = form.getValues("descricao");
 
-    if (!descricaoAtual.trim()) {
-      showSnackbar("Informe uma descrição antes de usar a sugestão com IA.");
+    if (!fotoUri || !fotoBase64) {
+      showSnackbar("Adicione uma foto antes de usar a IA.");
       return;
     }
 
     try {
       setGerandoDescricao(true);
 
-      const sugestao = await gerarDescricaoComIa(descricaoAtual);
+      const sugestao = await gerarDescricaoComIa(
+        descricaoAtual,
+        fotoBase64,
+        fotoMimeType ?? "image/jpeg",
+      );
 
       form.setValue("descricao", sugestao, {
         shouldValidate: true,
