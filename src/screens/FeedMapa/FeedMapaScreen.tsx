@@ -9,6 +9,9 @@ import { Card, Text } from "react-native-paper";
 
 import { ocorrenciasMock } from "../../components/mock";
 
+// ADICIONADO — Item 10: usa o cálculo de distância compartilhado.
+import { calculateDistanceInMeters } from "../../services/distancia";
+
 // ACRESCENTADO: leitura dos dados e acompanhamento das atualizações.
 import { obterStatusAtual } from "../../services/historicoStatus";
 import {
@@ -24,29 +27,7 @@ const CARD_HEIGHT = 270;
 const CARD_GAP = 16;
 const CARD_SNAP_INTERVAL = CARD_HEIGHT + CARD_GAP;
 
-function calculateDistanceInMeters(
-  origin: { lat: number; lng: number },
-  destination: { lat?: number; lng?: number },
-) {
-  if (destination.lat == null || destination.lng == null) return null;
-
-  const earthRadius = 6371000;
-  const latitudeDifference = ((destination.lat - origin.lat) * Math.PI) / 180;
-  const longitudeDifference = ((destination.lng - origin.lng) * Math.PI) / 180;
-  const originLatitude = (origin.lat * Math.PI) / 180;
-  const destinationLatitude = (destination.lat * Math.PI) / 180;
-
-  const haversine =
-    Math.sin(latitudeDifference / 2) ** 2 +
-    Math.cos(originLatitude) *
-      Math.cos(destinationLatitude) *
-      Math.sin(longitudeDifference / 2) ** 2;
-
-  return (
-    2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
-  );
-}
-
+// ALTERADO — Item 10: o cálculo de distância foi movido para services/distancia.ts.
 function formatDistance(distanceInMeters: number | null) {
   if (distanceInMeters == null) return "Distância indisponível";
 
