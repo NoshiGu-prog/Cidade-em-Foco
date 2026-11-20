@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Camera, MapPin, Sparkles } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Switch, Text } from "react-native-paper";
@@ -20,7 +20,8 @@ import {
 export function RegistroOcorrenciaScreen({
   onRegister,
 }: {
-  onRegister: (ocorrencia: OcorrenciaType) => void;
+  // Item 10: o cadastro aguarda a gravação no armazenamento local.
+  onRegister: (ocorrencia: OcorrenciaType) => Promise<void>;
 }) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
@@ -41,7 +42,12 @@ export function RegistroOcorrenciaScreen({
     },
   });
 
-  const { control } = form;
+  // Item 10: acompanha o envio e bloqueia gravações simultâneas.
+  const {
+    control,
+    formState: { isSubmitting },
+  } = form;
+  const salvamentoEmCurso = useRef(false);
   const { showSnackbar } = useAppSnackbar();
 
   const selecionarFoto = async () => {
@@ -170,7 +176,9 @@ export function RegistroOcorrenciaScreen({
     }
   };
 
-  const onSubmit = (data: OcorrenciaFormData) => {
+  const onSubmit = async (data: OcorrenciaFormData) => {
+    if (salvamentoEmCurso.current) return;
+
     if (!fotoUri) {
       showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
       return;
@@ -201,8 +209,17 @@ export function RegistroOcorrenciaScreen({
 
     console.log("Ocorrência válida", ocorrencia);
 
-    onRegister(ocorrencia);
-    showSnackbar("Ocorrência registrada com sucesso!");
+    // Item 10: confirma o registro somente após a gravação.
+    salvamentoEmCurso.current = true;
+    try {
+      await onRegister(ocorrencia);
+      showSnackbar("Ocorrência registrada com sucesso!");
+    } catch (erro) {
+      console.error("Erro ao salvar ocorrência:", erro);
+      showSnackbar("Não foi possível salvar a ocorrência. Tente novamente.");
+    } finally {
+      salvamentoEmCurso.current = false;
+    }
   };
 
   return (
@@ -358,9 +375,12 @@ export function RegistroOcorrenciaScreen({
             </View>
           </View>
 
+          {/* Item 10: mostra o envio em andamento no botão de registro. */}
           <Button
             mode="contained"
             onPress={form.handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            disabled={isSubmitting}
             contentStyle={styles.registerButtonContent}
             labelStyle={styles.registerButtonLabel}
           >
