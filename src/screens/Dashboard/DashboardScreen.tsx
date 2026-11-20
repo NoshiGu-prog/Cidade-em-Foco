@@ -1,10 +1,22 @@
-import { useMemo } from "react";
+// Item 10: useEffect e useState acompanham os registros salvos.
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { Card, Text } from "react-native-paper";
 import { Text as SvgText } from "react-native-svg";
 import { ocorrenciasMock } from "../../components/mock";
 import { obterStatusAtual } from "../../services/historicoStatus";
+
+// Item 10: importa a regra de agrupamento e o acesso aos registros salvos.
+import {
+  agruparOcorrenciasSemelhantes,
+  RAIO_AGRUPAMENTO_METROS,
+} from "../../services/ocorrenciasSemelhantes";
+import {
+  assinarAtualizacoesOcorrencias,
+  carregarOcorrencias,
+} from "../../services/ocorrenciasStorage";
+
 import {
   StatusOcorrencia,
   TIPOS_OCORRENCIA,
@@ -67,7 +79,32 @@ function formatarDuracao(horas: number) {
 
 export function DashboardScreen() {
   const { width: windowWidth } = useWindowDimensions();
-  const ocorrencias = ocorrenciasMock;
+
+  // Item 10: começa com os exemplos e usa a lista salva quando ela existe.
+  const [ocorrencias, setOcorrencias] = useState<OcorrenciaType[]>(ocorrenciasMock);
+
+  // Item 10: carrega a lista local e acompanha as alterações.
+  useEffect(() => {
+    let leituraAtual = true;
+
+    const cancelar = assinarAtualizacoesOcorrencias((lista) => {
+      leituraAtual = false;
+      setOcorrencias(lista);
+    });
+
+    carregarOcorrencias()
+      .then((lista) => {
+        if (leituraAtual && lista !== null) setOcorrencias(lista);
+      })
+      .catch((erro) => {
+        if (leituraAtual) console.error("Erro ao carregar ocorrências:", erro);
+      });
+
+    return () => {
+      leituraAtual = false;
+      cancelar();
+    };
+  }, []);
 
   const dados = useMemo(() => {
     const agora = new Date();
@@ -102,7 +139,8 @@ export function DashboardScreen() {
       { totalHoras: number; quantidade: number }
     >();
     recentes.forEach((ocorrencia) => {
-      const resolucao = ocorrencia.historicoStatus.find(
+      // Item 10: aceita registros salvos que ainda não têm histórico.
+      const resolucao = ocorrencia.historicoStatus?.find(
         (alteracao) => alteracao.novoStatus === "RESOLVIDA",
       );
       if (!resolucao) return;
@@ -124,6 +162,8 @@ export function DashboardScreen() {
 
     return {
       recentes,
+      // Item 10: agrupa os registros dos últimos 30 dias.
+      grupos: agruparOcorrenciasSemelhantes(recentes),
       tipos: TIPOS_OCORRENCIA.map((tipo, index) => ({
         ...tipo,
         quantidade: contagemPorTipo.get(tipo.value) ?? 0,
@@ -203,6 +243,48 @@ export function DashboardScreen() {
         <MetricCard label="Com risco" value={totalPerigosas} tone="orange" />
         <MetricCard label="Resolvidos" value={totalResolvidas} tone="teal" />
       </View>
+
+      {/* Item 10: mostra os grupos e os registros de cada grupo. */}
+      <Card mode="contained" style={dashboardStyles.chartCard}>
+        <Card.Content style={dashboardStyles.chartContent}>
+          <View>
+            <Text variant="titleLarge" style={dashboardStyles.sectionTitle}>
+              Ocorrências semelhantes
+            </Text>
+            <Text style={dashboardStyles.sectionSubtitle}>
+              Registros do mesmo tipo ligados por distâncias de até{" "}
+              {RAIO_AGRUPAMENTO_METROS} m
+            </Text>
+          </View>
+
+          {dados.grupos.length === 0 && (
+            <Text>Nenhum grupo encontrado nos últimos 30 dias.</Text>
+          )}
+
+          {dados.grupos.map((grupo) => (
+            <View key={grupo[0].id} style={dashboardStyles.slaItem}>
+              <Text variant="titleMedium">
+                {
+                  TIPOS_OCORRENCIA.find(
+                    ({ value }) => value === grupo[0].tipo,
+                  )?.label
+                }
+                {" · "}
+                {grupo.length} registros
+              </Text>
+
+              {grupo.map((ocorrencia) => (
+                <View key={ocorrencia.id}>
+                  <Text variant="bodyMedium">{ocorrencia.descricao}</Text>
+                  <Text style={dashboardStyles.sectionSubtitle}>
+                    {ocorrencia.endereco || "Endereço indisponível"}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </Card.Content>
+      </Card>
 
       <Card mode="contained" style={dashboardStyles.chartCard}>
         <Card.Content style={dashboardStyles.chartContent}>
