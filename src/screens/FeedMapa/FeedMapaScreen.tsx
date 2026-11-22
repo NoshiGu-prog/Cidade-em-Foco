@@ -9,6 +9,9 @@ import { Card, Text } from "react-native-paper";
 
 import { ocorrenciasMock } from "../../components/mock";
 
+// ADICIONADO — Item 10: usa o cálculo de distância compartilhado.
+import { calculateDistanceInMeters } from "../../services/distancia";
+
 // ACRESCENTADO: leitura dos dados e acompanhamento das atualizações.
 import { obterStatusAtual } from "../../services/historicoStatus";
 import {
@@ -44,29 +47,7 @@ const prioridadeLabels: Record<PrioridadeOcorrencia, string> = {
   BAIXA: "Baixa",
 };
 
-function calculateDistanceInMeters(
-  origin: { lat: number; lng: number },
-  destination: { lat?: number; lng?: number },
-) {
-  if (destination.lat == null || destination.lng == null) return null;
-
-  const earthRadius = 6371000;
-  const latitudeDifference = ((destination.lat - origin.lat) * Math.PI) / 180;
-  const longitudeDifference = ((destination.lng - origin.lng) * Math.PI) / 180;
-  const originLatitude = (origin.lat * Math.PI) / 180;
-  const destinationLatitude = (destination.lat * Math.PI) / 180;
-
-  const haversine =
-    Math.sin(latitudeDifference / 2) ** 2 +
-    Math.cos(originLatitude) *
-      Math.cos(destinationLatitude) *
-      Math.sin(longitudeDifference / 2) ** 2;
-
-  return (
-    2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
-  );
-}
-
+// ALTERADO — Item 10: o cálculo de distância foi movido para services/distancia.ts.
 function formatDistance(distanceInMeters: number | null) {
   if (distanceInMeters == null) return "Distância indisponível";
 
@@ -362,80 +343,87 @@ export function FeedMapaScreen() {
               const ocorrencia = item.ocorrencia;
 
               return (
-              <View
-                style={[
-                  { height: CARD_HEIGHT, marginBottom: CARD_GAP },
-                  Platform.OS === "web"
-                    ? ({
-                        scrollSnapAlign: "start",
-                        scrollSnapStop: "always",
-                      } as any)
-                    : undefined,
-                ]}
-              >
-                <Card
-                  mode="elevated"
-                  style={{ height: CARD_HEIGHT, backgroundColor: "white" }}
+                <View
+                  style={[
+                    { height: CARD_HEIGHT, marginBottom: CARD_GAP },
+                    Platform.OS === "web"
+                      ? ({
+                          scrollSnapAlign: "start",
+                          scrollSnapStop: "always",
+                        } as any)
+                      : undefined,
+                  ]}
                 >
-                  <Card.Cover
-                    source={{ uri: ocorrencia.imagem }}
-                    style={{ height: 112 }}
-                  />
+                  <Card
+                    mode="elevated"
+                    style={{ height: CARD_HEIGHT, backgroundColor: "white" }}
+                  >
+                    <Card.Cover
+                      source={{ uri: ocorrencia.imagem }}
+                      style={{ height: 112 }}
+                    />
 
-                  <Card.Title
-                    title={ocorrencia.endereco}
-                    subtitleVariant="titleSmall"
-                    titleVariant="titleMedium"
-                    subtitle={
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text variant="titleSmall">
-                          Status: {getStatusLabel(obterStatusAtual(ocorrencia))}
-                        </Text>
-                        <Text
+                    <Card.Title
+                      title={ocorrencia.endereco}
+                      subtitleVariant="titleSmall"
+                      titleVariant="titleMedium"
+                      subtitle={
+                        <View
                           style={{
-                            backgroundColor: coresPrioridade[item.prioridade],
-                            color: "white",
-                            fontSize: 12,
-                            fontWeight: "bold",
-                            borderRadius: 12,
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            textAlign: "center",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
                           }}
-                          accessibilityLabel={`Prioridade ${prioridadeLabels[item.prioridade]}`}
                         >
-                          {prioridadeLabels[item.prioridade]}
+                          <Text variant="titleSmall">
+                            Status:{" "}
+                            {getStatusLabel(obterStatusAtual(ocorrencia))}
+                          </Text>
+                          <Text
+                            style={{
+                              backgroundColor: coresPrioridade[item.prioridade],
+                              color: "white",
+                              fontSize: 12,
+                              fontWeight: "bold",
+                              borderRadius: 12,
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
+                              textAlign: "center",
+                            }}
+                            accessibilityLabel={`Prioridade ${prioridadeLabels[item.prioridade]}`}
+                          >
+                            {prioridadeLabels[item.prioridade]}
+                          </Text>
+                        </View>
+                      }
+                    />
+
+                    <Card.Content
+                      style={{
+                        paddingBottom: 8,
+                        justifyContent: "space-between",
+                        flex: 1,
+                      }}
+                    >
+                      <Text style={{ overflow: "hidden" }}>
+                        {ocorrencia.descricao}
+                      </Text>
+
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Text style={{ textAlign: "right" }}>
+                          {formatDistance(
+                            userLocation
+                              ? calculateDistanceInMeters(userLocation, {
+                                  lat: ocorrencia.latitude,
+                                  lng: ocorrencia.longitude,
+                                })
+                              : null,
+                          )}
                         </Text>
                       </View>
-                    }
-                  />
-
-                  <Card.Content
-                    style={{
-                      paddingBottom: 8,
-                      justifyContent: "space-between",
-                      flex: 1,
-                    }}
-                  >
-                    <Text style={{ overflow: "hidden" }}>
-                      {ocorrencia.descricao}
-                    </Text>
-
-                    <View style={{ alignItems: "flex-end" }}>
-                      <Text style={{ textAlign: "right" }}>
-                        {formatDistance(
-                          userLocation
-                            ? calculateDistanceInMeters(userLocation, {
-                                lat: ocorrencia.latitude,
-                                lng: ocorrencia.longitude,
-                              })
-                            : null,
-                        )}
-                      </Text>
-                    </View>
-                  </Card.Content>
-                </Card>
-              </View>
+                    </Card.Content>
+                  </Card>
+                </View>
               );
             }}
           />
