@@ -20,11 +20,6 @@ export function obterStatusAtual(
     }
   }
 
-  console.log(
-    "alteracaoMaisRecente?.novoStatus",
-    alteracaoMaisRecente?.novoStatus,
-  );
-
   return alteracaoMaisRecente?.novoStatus ?? "ENVIADA";
 }
 
