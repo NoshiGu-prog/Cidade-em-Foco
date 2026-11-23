@@ -1,9 +1,11 @@
+import { API_URL } from "../config/api";
+
 export async function gerarDescricaoComIa(
   descricaoOriginal: string,
   imagemBase64: string,
   imagemMimeType = "image/jpeg",
 ): Promise<string> {
-  const resposta = await fetch("http://localhost:3333/gerar-descricao", {
+  const resposta = await fetch(`${API_URL}/gerar-descricao`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

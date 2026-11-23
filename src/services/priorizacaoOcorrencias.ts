@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 import type {
   OcorrenciaPrioritizada,
   OcorrenciaType,
@@ -6,7 +8,7 @@ import type {
 export async function priorizarNoBackend(
   ocorrencias: OcorrenciaType[],
 ): Promise<OcorrenciaPrioritizada[]> {
-  const resposta = await fetch("http://localhost:3333/ocorrencias/priorizadas", {
+  const resposta = await fetch(`${API_URL}/ocorrencias/priorizadas`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
