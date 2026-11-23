@@ -8,10 +8,7 @@ import {
   carregarOcorrencias,
 } from "../services/ocorrenciasStorage";
 import { colors } from "../theme/theme";
-import type {
-  OcorrenciaType,
-  StatusOcorrencia,
-} from "../types/ocorrencia";
+import type { OcorrenciaType, StatusOcorrencia } from "../types/ocorrencia";
 
 const etapas: {
   status: StatusOcorrencia;
@@ -60,16 +57,12 @@ function mesclarOcorrencias(
 function AcompanhamentoCard({ item }: { item: OcorrenciaType }) {
   const statusAtual = obterStatusAtual(item);
 
-  const indiceAtual = etapas.findIndex(
-    (etapa) => etapa.status === statusAtual,
-  );
+  const indiceAtual = etapas.findIndex((etapa) => etapa.status === statusAtual);
 
-  const ultimaAlteracao = [...(item.historicoStatus ?? [])]
-    .sort(
-      (a, b) =>
-        new Date(b.alteradoEm).getTime() -
-        new Date(a.alteradoEm).getTime(),
-    )[0];
+  const ultimaAlteracao = [...(item.historicoStatus ?? [])].sort(
+    (a, b) =>
+      new Date(b.alteradoEm).getTime() - new Date(a.alteradoEm).getTime(),
+  )[0];
 
   return (
     <Card mode="elevated" style={styles.card}>
@@ -155,9 +148,8 @@ export function AcompanhamentoStatusScreen({
   ocorrencias?: OcorrenciaType[];
 }) {
   const [busca, setBusca] = useState("");
-  const [ocorrencias, setOcorrencias] = useState<OcorrenciaType[]>(
-    ocorrenciasRecebidas,
-  );
+  const [ocorrencias, setOcorrencias] =
+    useState<OcorrenciaType[]>(ocorrenciasRecebidas);
 
   useEffect(() => {
     let ativo = true;
@@ -167,29 +159,22 @@ export function AcompanhamentoStatusScreen({
         const salvas = await carregarOcorrencias();
 
         if (ativo && salvas) {
-          setOcorrencias(
-            mesclarOcorrencias(ocorrenciasRecebidas, salvas),
-          );
+          setOcorrencias(mesclarOcorrencias(ocorrenciasRecebidas, salvas));
         }
       } catch (erro) {
-        console.log(
-          "Erro ao carregar ocorrências para acompanhamento:",
-          erro,
-        );
+        console.log("Erro ao carregar ocorrências para acompanhamento:", erro);
       }
     }
 
-    const cancelarAssinatura =
-      assinarAtualizacoesOcorrencias((novasOcorrencias) => {
+    const cancelarAssinatura = assinarAtualizacoesOcorrencias(
+      (novasOcorrencias) => {
         if (ativo) {
           setOcorrencias(
-            mesclarOcorrencias(
-              ocorrenciasRecebidas,
-              novasOcorrencias,
-            ),
+            mesclarOcorrencias(ocorrenciasRecebidas, novasOcorrencias),
           );
         }
-      });
+      },
+    );
 
     void carregar();
 
@@ -218,9 +203,7 @@ export function AcompanhamentoStatusScreen({
       <FlatList
         data={ocorrenciasFiltradas}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <AcompanhamentoCard item={item} />
-        )}
+        renderItem={({ item }) => <AcompanhamentoCard item={item} />}
         contentContainerStyle={styles.lista}
         ListHeaderComponent={
           <View style={styles.header}>
@@ -241,9 +224,7 @@ export function AcompanhamentoStatusScreen({
           </View>
         }
         ListEmptyComponent={
-          <Text style={styles.vazio}>
-            Nenhuma ocorrência encontrada.
-          </Text>
+          <Text style={styles.vazio}>Nenhuma ocorrência encontrada.</Text>
         }
       />
     </View>

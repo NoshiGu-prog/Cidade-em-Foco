@@ -40,6 +40,26 @@ export async function listarOcorrencias() {
   return resultado;
 }
 
+export interface NovaOcorrencia {
+  usuarioId?: string | null;
+  descricao: string;
+  tipo:
+    | "BURACO"
+    | "ILUMINACAO"
+    | "ARBORIZACAO"
+    | "SANEAMENTO"
+    | "LIMPEZA"
+    | "ELETRICA"
+    | "TRANSITO"
+    | "OUTROS";
+  fotoUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  perigosa?: boolean;
+  imagem?: string | null;
+  endereco: string;
+}
+
 export async function criarOcorrencia(dados: NovaOcorrencia) {
   const [ocorrencia] = await sql`
     insert into ocorrencias (

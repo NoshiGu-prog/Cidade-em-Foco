@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Camera, MapPin, Sparkles } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Switch, Text } from "react-native-paper";
@@ -21,9 +21,12 @@ import { criarOcorrenciaApi } from "../services/ocorrenciasApi";
 export function RegistroOcorrenciaScreen({
   onRegister,
 }: {
-  onRegister: (ocorrencia: OcorrenciaType) => void;
+  // Item 10: o cadastro aguarda a gravação no armazenamento local.
+  onRegister: (ocorrencia: OcorrenciaType) => Promise<void>;
 }) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
+  const [fotoBase64, setFotoBase64] = useState<string | null>(null);
+  const [fotoMimeType, setFotoMimeType] = useState<string | null>(null);
   const [localizacao, setLocalizacao] = useState<{
     latitude: number;
     longitude: number;
@@ -42,7 +45,12 @@ export function RegistroOcorrenciaScreen({
     },
   });
 
-  const { control } = form;
+  // Item 10: acompanha o envio e bloqueia gravações simultâneas.
+  const {
+    control,
+    formState: { isSubmitting },
+  } = form;
+  const salvamentoEmCurso = useRef(false);
   const { showSnackbar } = useAppSnackbar();
 
   const selecionarFoto = async () => {
@@ -50,10 +58,14 @@ export function RegistroOcorrenciaScreen({
       mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.8,
+      base64: true,
     });
 
     if (!resultado.canceled) {
-      setFotoUri(resultado.assets[0].uri);
+      const foto = resultado.assets[0];
+      setFotoUri(foto.uri);
+      setFotoBase64(foto.base64 ?? null);
+      setFotoMimeType(foto.mimeType ?? "image/jpeg");
     }
   };
 
@@ -147,15 +159,19 @@ export function RegistroOcorrenciaScreen({
   const melhorarDescricao = async () => {
     const descricaoAtual = form.getValues("descricao");
 
-    if (!descricaoAtual.trim()) {
-      showSnackbar("Informe uma descrição antes de usar a sugestão com IA.");
+    if (!fotoUri || !fotoBase64) {
+      showSnackbar("Adicione uma foto antes de usar a IA.");
       return;
     }
 
     try {
       setGerandoDescricao(true);
 
-      const sugestao = await gerarDescricaoComIa(descricaoAtual);
+      const sugestao = await gerarDescricaoComIa(
+        descricaoAtual,
+        fotoBase64,
+        fotoMimeType ?? "image/jpeg",
+      );
 
       form.setValue("descricao", sugestao, {
         shouldValidate: true,
@@ -172,59 +188,63 @@ export function RegistroOcorrenciaScreen({
   };
 
   const onSubmit = async (data: OcorrenciaFormData) => {
-  if (!fotoUri) {
-    showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
-    return;
-  }
+    if (salvamentoEmCurso.current) return;
 
-  if (!localizacao) {
-    showSnackbar("Obtenha a localização antes de registrar a ocorrência.");
-    return;
-  }
+    if (!fotoUri) {
+      showSnackbar("Adicione uma foto antes de registrar a ocorrência.");
+      return;
+    }
 
-  const ocorrencia: OcorrenciaType = {
-    id: `local-${Date.now()}`,
-    ...data,
-    historicoStatus: [
-      {
-        statusAnterior: null,
-        novoStatus: "ENVIADA",
-        alteradoEm: new Date(),
-      },
-    ],
-    criadaEm: new Date(),
-    imagem: fotoUri,
-    fotoUrl: fotoUri,
-    latitude: localizacao.latitude,
-    longitude: localizacao.longitude,
-    endereco: endereco ?? "Endereço não informado",
+    if (!localizacao) {
+      showSnackbar("Obtenha a localização antes de registrar a ocorrência.");
+      return;
+    }
+
+    const ocorrencia: OcorrenciaType = {
+      id: `local-${Date.now()}`,
+      ...data,
+      historicoStatus: [
+        {
+          statusAnterior: null,
+          novoStatus: "ENVIADA",
+          alteradoEm: new Date(),
+        },
+      ],
+      criadaEm: new Date(),
+      imagem: fotoUri,
+      fotoUrl: fotoUri,
+      latitude: localizacao.latitude,
+      longitude: localizacao.longitude,
+      endereco: endereco ?? "Endereço não informado",
+    };
+
+    console.log("Ocorrência válida", ocorrencia);
+
+    // Item 10: confirma o registro somente após a gravação.
+    salvamentoEmCurso.current = true;
+
+try {
+  await criarOcorrenciaApi({
+    descricao: ocorrencia.descricao,
+    tipo: ocorrencia.tipo,
+    fotoUrl: ocorrencia.fotoUrl,
+    latitude: ocorrencia.latitude,
+    longitude: ocorrencia.longitude,
+    perigosa: ocorrencia.perigosa,
+    imagem: ocorrencia.imagem,
+    endereco: ocorrencia.endereco,
+  });
+
+  await onRegister(ocorrencia);
+
+  showSnackbar("Ocorrência registrada com sucesso!");
+} catch (erro) {
+  console.error("Erro ao salvar ocorrência:", erro);
+  showSnackbar("Não foi possível salvar a ocorrência. Tente novamente.");
+} finally {
+  salvamentoEmCurso.current = false;
+}
   };
-
-  try {
-    await criarOcorrenciaApi({
-      descricao: ocorrencia.descricao,
-      tipo: ocorrencia.tipo,
-      fotoUrl: ocorrencia.fotoUrl,
-      latitude: ocorrencia.latitude,
-      longitude: ocorrencia.longitude,
-      perigosa: ocorrencia.perigosa,
-      imagem: ocorrencia.imagem,
-      endereco: ocorrencia.endereco,
-    });
-
-    console.log("Ocorrência salva no banco com sucesso.");
-
-    onRegister(ocorrencia);
-
-    showSnackbar("Ocorrência registrada com sucesso!");
-  } catch (erro) {
-    console.error("Erro ao salvar ocorrência no banco:", erro);
-
-    showSnackbar(
-      "Não foi possível registrar a ocorrência no banco. Tente novamente.",
-    );
-  }
-};
 
   return (
     <FormProvider {...form}>
@@ -379,9 +399,12 @@ export function RegistroOcorrenciaScreen({
             </View>
           </View>
 
+          {/* Item 10: mostra o envio em andamento no botão de registro. */}
           <Button
             mode="contained"
             onPress={form.handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            disabled={isSubmitting}
             contentStyle={styles.registerButtonContent}
             labelStyle={styles.registerButtonLabel}
           >
