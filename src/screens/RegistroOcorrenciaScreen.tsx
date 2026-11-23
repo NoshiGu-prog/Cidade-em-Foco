@@ -16,6 +16,7 @@ import {
   ocorrenciaSchema,
   type OcorrenciaFormData,
 } from "../validation/schemas";
+import { criarOcorrenciaApi } from "../services/ocorrenciasApi";
 
 export function RegistroOcorrenciaScreen({
   onRegister,
@@ -221,15 +222,28 @@ export function RegistroOcorrenciaScreen({
 
     // Item 10: confirma o registro somente após a gravação.
     salvamentoEmCurso.current = true;
-    try {
-      await onRegister(ocorrencia);
-      showSnackbar("Ocorrência registrada com sucesso!");
-    } catch (erro) {
-      console.error("Erro ao salvar ocorrência:", erro);
-      showSnackbar("Não foi possível salvar a ocorrência. Tente novamente.");
-    } finally {
-      salvamentoEmCurso.current = false;
-    }
+
+try {
+  await criarOcorrenciaApi({
+    descricao: ocorrencia.descricao,
+    tipo: ocorrencia.tipo,
+    fotoUrl: ocorrencia.fotoUrl,
+    latitude: ocorrencia.latitude,
+    longitude: ocorrencia.longitude,
+    perigosa: ocorrencia.perigosa,
+    imagem: ocorrencia.imagem,
+    endereco: ocorrencia.endereco,
+  });
+
+  await onRegister(ocorrencia);
+
+  showSnackbar("Ocorrência registrada com sucesso!");
+} catch (erro) {
+  console.error("Erro ao salvar ocorrência:", erro);
+  showSnackbar("Não foi possível salvar a ocorrência. Tente novamente.");
+} finally {
+  salvamentoEmCurso.current = false;
+}
   };
 
   return (
