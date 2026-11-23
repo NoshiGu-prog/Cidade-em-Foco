@@ -20,14 +20,32 @@ import { RouteType } from "../types/routes";
 import { ocorrenciasMock } from "./mock";
 import { AcompanhamentoStatusScreen } from "../screens/AcompanhamentoStatusScreen";
 
+// Item 10: usa o mesmo armazenamento consultado pelo Feed e pelo Dashboard.
+import {
+  carregarOcorrencias,
+  salvarOcorrencias,
+} from "../services/ocorrenciasStorage";
+
 const PerfilScreen = () => <Text>Perfil</Text>;
 
 export const MenuBar = () => {
   const [index, setIndex] = React.useState(0);
-  const [ocorrencias, setOcorrencias] = React.useState(ocorrenciasMock);
+  const [ocorrencias, setOcorrencias] =
+    React.useState<OcorrenciaType[]>(ocorrenciasMock);
 
-  const adicionarOcorrencia = (ocorrencia: OcorrenciaType) => {
-    setOcorrencias((atuais) => [ocorrencia, ...atuais]);
+  // Item 10: permite que o Feed releia os dados depois de um cadastro.
+  const [versaoFeed, setVersaoFeed] = React.useState(0);
+
+  const adicionarOcorrencia = async (ocorrencia: OcorrenciaType) => {
+    const listaSalva = await carregarOcorrencias();
+    const novaLista = [ocorrencia, ...(listaSalva ?? ocorrenciasMock)];
+
+    await salvarOcorrencias(novaLista);
+    setOcorrencias(novaLista);
+
+    // Item 10: atualiza o Feed e abre a primeira aba após gravar.
+    setVersaoFeed((versaoAtual) => versaoAtual + 1);
+    setIndex(0);
   };
 
   const routes = [
@@ -96,16 +114,19 @@ export const MenuBar = () => {
   const renderScene = ({ route }: { route: { key: RouteType } }) => {
     switch (route.key) {
       case "feed":
-        // Mere Helen: o Feed agora mostra a lista de ocorrências.
-        return <ListaOcorrenciasScreen ocorrencias={ocorrencias} />;
+        // Item 10: a nova chave faz o Feed recarregar a lista e limpar a busca.
+        return (
+          <ListaOcorrenciasScreen
+            key={versaoFeed}
+            ocorrencias={ocorrencias}
+          />
+        );
       case "mapa":
         return <FeedMapaScreen />;
       case "registrar":
         return <RegistroOcorrenciaScreen onRegister={adicionarOcorrencia} />;
       case "notifications":
-        return (
-              <AcompanhamentoStatusScreen ocorrencias={ocorrencias} />
-       );
+        return <AcompanhamentoStatusScreen ocorrencias={ocorrencias} />;
       case "dashboard":
         return <DashboardScreen />;
       case "perfil":

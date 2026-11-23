@@ -56,3 +56,17 @@ export interface OcorrenciaType {
   // O campo é opcional para manter compatibilidade com os dados existentes.
   historicoStatus: HistoricoStatus[];
 }
+
+export type PrioridadeOcorrencia =
+  | "CRITICA"
+  | "ALTA"
+  | "MEDIA"
+  | "BAIXA";
+
+export interface OcorrenciaPrioritizada {
+  ocorrencia: OcorrenciaType;
+  prioridade: PrioridadeOcorrencia;
+  chamadosNaRegiao: number;
+  chamadosPerigosos: number;
+  chamadosRecentes: number;
+}

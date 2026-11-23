@@ -15,7 +15,18 @@ import {
 } from "../services/ocorrenciasStorage";
 
 import { colors } from "../theme/theme";
-import type { OcorrenciaType, StatusOcorrencia } from "../types/ocorrencia";
+import { priorizarNoBackend } from "../services/priorizacaoOcorrencias";
+import {
+  TIPOS_OCORRENCIA,
+  type OcorrenciaType,
+  type OcorrenciaPrioritizada,
+  type PrioridadeOcorrencia,
+  type StatusOcorrencia,
+} from "../types/ocorrencia";
+import {
+  atualizarStatusOcorrenciaApi,
+  listarOcorrenciasApi,
+} from "../services/ocorrenciasApi";
 
 const statusLabels: Record<StatusOcorrencia, string> = {
   ENVIADA: "Enviada",
@@ -32,6 +43,24 @@ const opcoesStatus: StatusOcorrencia[] = [
 ];
 
 const filtros: (StatusOcorrencia | "TODAS")[] = ["TODAS", ...opcoesStatus];
+
+const coresPrioridade: Record<PrioridadeOcorrencia, string> = {
+  CRITICA: "#b3261e",
+  ALTA: "#c45a00",
+  MEDIA: "#8a6d00",
+  BAIXA: "#357a38",
+};
+
+const prioridadeLabels: Record<PrioridadeOcorrencia, string> = {
+  CRITICA: "Crítica",
+  ALTA: "Alta",
+  MEDIA: "Média",
+  BAIXA: "Baixa",
+};
+
+const tipoLabels = new Map(
+  TIPOS_OCORRENCIA.map((tipo) => [tipo.value, tipo.label]),
+);
 
 function formatarDataHistorico(valor: string | Date): string {
   const data = new Date(valor);
@@ -50,7 +79,7 @@ function formatarDataHistorico(valor: string | Date): string {
 }
 
 type OcorrenciaCardProps = {
-  item: OcorrenciaType;
+  avaliacao: OcorrenciaPrioritizada;
   onAlterarStatus: (id: string, novoStatus: StatusOcorrencia) => void;
 
   // ACRESCENTADO: bloqueia os controles durante o salvamento.
@@ -58,10 +87,17 @@ type OcorrenciaCardProps = {
 };
 
 function OcorrenciaCard({
-  item,
+  avaliacao,
   onAlterarStatus,
   salvando,
 }: OcorrenciaCardProps) {
+  const {
+    ocorrencia: item,
+    prioridade,
+    chamadosNaRegiao,
+    chamadosPerigosos,
+    chamadosRecentes,
+  } = avaliacao;
   const data = new Date(item.criadaEm);
   const statusAtual = obterStatusAtual(item);
 
@@ -80,8 +116,28 @@ function OcorrenciaCard({
             {item.endereco}
           </Text>
 
-          {item.perigosa && <Text style={styles.danger}>Perigosa</Text>}
+          <View style={styles.badges}>
+            <Text
+              style={[
+                styles.priorityIndicator,
+                { backgroundColor: coresPrioridade[prioridade] },
+              ]}
+              accessibilityLabel={`Prioridade ${prioridadeLabels[prioridade]}`}
+            >
+              {prioridadeLabels[prioridade]}
+            </Text>
+          </View>
         </View>
+
+        <Text variant="bodySmall" style={styles.notice}>
+          {tipoLabels.get(item.tipo) ?? item.tipo} · {chamadosNaRegiao}{" "}
+          {chamadosNaRegiao === 1 ? "chamado" : "chamados"} na região ·{" "}
+          {chamadosPerigosos}{" "}
+          {chamadosPerigosos === 1
+            ? "marcado como perigoso"
+            : "marcados como perigosos"}{" "}
+          · {chamadosRecentes} nos últimos 30 dias
+        </Text>
 
         <Text variant="bodyMedium">{item.descricao}</Text>
 
@@ -165,14 +221,13 @@ export function ListaOcorrenciasScreen({
 }) {
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<StatusOcorrencia | "TODAS">("TODAS");
-
-  // ALTERADO: a lista será preenchida após consultar o armazenamento.
-  const [listaOcorrencias, setListaOcorrencias] = useState<OcorrenciaType[]>(
-    [],
-  );
+  const [listaOcorrencias, setListaOcorrencias] = useState<
+    OcorrenciaPrioritizada[]
+  >([]);
 
   // ACRESCENTADO: estados de carregamento, salvamento e erro.
   const [carregando, setCarregando] = useState(true);
+  const [carregamentoConcluido, setCarregamentoConcluido] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
   const [erroSalvamento, setErroSalvamento] = useState<string | null>(null);
@@ -185,26 +240,43 @@ export function ListaOcorrenciasScreen({
     let ativo = true;
 
     async function iniciar() {
-      try {
-        const dadosSalvos = await carregarOcorrencias();
+  try {
+    // Primeiro tenta carregar as ocorrências reais do PostgreSQL.
+    const dadosApi = await listarOcorrenciasApi();
 
-        if (ativo) {
-          // Usa os exemplos apenas quando não existem dados salvos.
-          setListaOcorrencias(dadosSalvos ?? ocorrenciasMock);
-        }
-      } catch {
-        if (ativo) {
-          // Não substitui dados salvos quando ocorre erro de leitura.
-          setErroCarregamento(
-            "Não foi possível carregar as ocorrências. Reabra a tela para tentar novamente.",
-          );
-        }
-      } finally {
-        if (ativo) {
-          setCarregando(false);
-        }
+    // Depois aplica a priorização criada pela Duda.
+    const dadosPriorizados = await priorizarNoBackend(dadosApi);
+
+    if (ativo) {
+      setListaOcorrencias(dadosPriorizados);
+    }
+  } catch (erro) {
+    console.error("Erro ao buscar ocorrências da API:", erro);
+
+    // Se o backend/banco estiver indisponível,
+    // mantém o comportamento anterior como alternativa.
+    try {
+      const dadosSalvos = await carregarOcorrencias();
+      const dadosBase = dadosSalvos ?? todasOcorrencias;
+      const dadosPriorizados = await priorizarNoBackend(dadosBase);
+
+      if (ativo) {
+        setListaOcorrencias(dadosPriorizados);
+      }
+    } catch {
+      if (ativo) {
+        setErroCarregamento(
+          "Não foi possível carregar e priorizar as ocorrências. Verifique o backend e tente novamente.",
+        );
       }
     }
+  } finally {
+    if (ativo) {
+      setCarregando(false);
+      setCarregamentoConcluido(true);
+    }
+  }
+}
 
     void iniciar();
 
@@ -213,6 +285,51 @@ export function ListaOcorrenciasScreen({
       ativo = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!carregamentoConcluido) {
+      return;
+    }
+
+    let ativo = true;
+
+    async function incluirNovasOcorrencias() {
+      const atuais = listaOcorrencias.map(
+        ({ ocorrencia }) => ocorrencia,
+      );
+      const idsAtuais = new Set(atuais.map((ocorrencia) => ocorrencia.id));
+      const novasOcorrencias = todasOcorrencias.filter(
+        (ocorrencia) => !idsAtuais.has(ocorrencia.id),
+      );
+
+      if (novasOcorrencias.length === 0) {
+        return;
+      }
+
+      try {
+        const dadosPriorizados = await priorizarNoBackend([
+          ...novasOcorrencias,
+          ...atuais,
+        ]);
+
+        if (ativo) {
+          setListaOcorrencias(dadosPriorizados);
+        }
+      } catch {
+        if (ativo) {
+          setErroCarregamento(
+            "Não foi possível atualizar a lista priorizada.",
+          );
+        }
+      }
+    }
+
+    void incluirNovasOcorrencias();
+
+    return () => {
+      ativo = false;
+    };
+  }, [carregamentoConcluido, todasOcorrencias]);
 
   // ALTERADO: salva a lista antes de atualizar o cartão.
   const alterarStatus = async (
@@ -223,7 +340,9 @@ export function ListaOcorrenciasScreen({
       return;
     }
 
-    const ocorrenciaAtual = listaOcorrencias.find((item) => item.id === id);
+    const ocorrenciaAtual = listaOcorrencias.find(
+      (item) => item.ocorrencia.id === id,
+    )?.ocorrencia;
 
     if (!ocorrenciaAtual || obterStatusAtual(ocorrenciaAtual) === novoStatus) {
       return;
@@ -234,41 +353,45 @@ export function ListaOcorrenciasScreen({
     setErroSalvamento(null);
 
     try {
-      const novaLista = listaOcorrencias.map((ocorrencia) =>
-        ocorrencia.id === id
-          ? atualizarStatusOcorrencia(ocorrencia, novoStatus)
-          : ocorrencia,
-      );
+  // Salva a alteração de status no PostgreSQL.
+  await atualizarStatusOcorrenciaApi(id, novoStatus);
 
-      await salvarOcorrencias(novaLista);
-      setListaOcorrencias(novaLista);
-    } catch {
-      // Mantém o status anterior caso o salvamento falhe.
-      setErroSalvamento(
-        "Não foi possível salvar a alteração. O status foi mantido. Tente novamente.",
-      );
-    } finally {
-      salvamentoEmCurso.current = false;
-      setSalvando(false);
-    }
-  };
+  // Busca novamente as ocorrências para receber também
+  // o histórico atualizado que acabou de ser salvo.
+  const ocorrenciasAtualizadas = await listarOcorrenciasApi();
 
-  const ocorrencias = useMemo(() => {
+  // Mantém uma cópia local como fallback.
+  await salvarOcorrencias(ocorrenciasAtualizadas);
+
+  // Aplica novamente a priorização criada pela Duda.
+  const dadosPriorizados = await priorizarNoBackend(
+    ocorrenciasAtualizadas,
+  );
+
+  setListaOcorrencias(dadosPriorizados);
+} catch (erro) {
+  console.error("Erro ao atualizar status:", erro);
+
+  setErroSalvamento(
+    "Não foi possível salvar a alteração. O status foi mantido. Tente novamente.",
+  );
+} finally {
+  salvamentoEmCurso.current = false;
+  setSalvando(false);
+}
+};
+
+const ocorrencias = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
 
-    return listaOcorrencias
-      .filter(
-        (item) =>
-          (status === "TODAS" || obterStatusAtual(item) === status) &&
+    return listaOcorrencias.filter(
+      ({ ocorrencia: item }) =>
+        (status === "TODAS" || obterStatusAtual(item) === status) &&
           (!termo ||
             `${item.descricao} ${item.endereco}`
               .toLocaleLowerCase("pt-BR")
               .includes(termo)),
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
-      );
+    );
   }, [busca, status, listaOcorrencias]);
 
   // ACRESCENTADO: aguarda a leitura antes de exibir os controles.
@@ -295,10 +418,10 @@ export function ListaOcorrenciasScreen({
         data={ocorrencias}
         // ACRESCENTADO: atualiza os cartões quando o salvamento muda.
         extraData={salvando}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        keyExtractor={(item) => item.ocorrencia.id}
+        renderItem={({ item: avaliacao }) => (
           <OcorrenciaCard
-            item={item}
+            avaliacao={avaliacao}
             salvando={salvando}
             onAlterarStatus={(id, novoStatus) => {
               void alterarStatus(id, novoStatus);
@@ -417,14 +540,28 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: "flex-start",
   },
+  badges: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  priorityIndicator: {
+    minWidth: 58,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 2,
+  },
   address: {
     color: colors.brandBlue,
     fontWeight: "bold",
     flex: 1,
-  },
-  danger: {
-    color: "#b3261e",
-    fontWeight: "bold",
   },
   cardFooter: {
     flexDirection: "row",
