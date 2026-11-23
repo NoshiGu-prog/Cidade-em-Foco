@@ -23,7 +23,10 @@ import {
   type PrioridadeOcorrencia,
   type StatusOcorrencia,
 } from "../types/ocorrencia";
-import { listarOcorrenciasApi } from "../services/ocorrenciasApi";
+import {
+  atualizarStatusOcorrenciaApi,
+  listarOcorrenciasApi,
+} from "../services/ocorrenciasApi";
 
 const statusLabels: Record<StatusOcorrencia, string> = {
   ENVIADA: "Enviada",
@@ -350,27 +353,35 @@ export function ListaOcorrenciasScreen({
     setErroSalvamento(null);
 
     try {
-      const novaLista = listaOcorrencias.map(({ ocorrencia }) =>
-        ocorrencia.id === id
-          ? atualizarStatusOcorrencia(ocorrencia, novoStatus)
-          : ocorrencia,
-      );
+  // Salva a alteração de status no PostgreSQL.
+  await atualizarStatusOcorrenciaApi(id, novoStatus);
 
-      await salvarOcorrencias(novaLista);
-      const dadosPriorizados = await priorizarNoBackend(novaLista);
-      setListaOcorrencias(dadosPriorizados);
-    } catch {
-      // Mantém o status anterior caso o salvamento falhe.
-      setErroSalvamento(
-        "Não foi possível salvar a alteração. O status foi mantido. Tente novamente.",
-      );
-    } finally {
-      salvamentoEmCurso.current = false;
-      setSalvando(false);
-    }
-  };
+  // Busca novamente as ocorrências para receber também
+  // o histórico atualizado que acabou de ser salvo.
+  const ocorrenciasAtualizadas = await listarOcorrenciasApi();
 
-  const ocorrencias = useMemo(() => {
+  // Mantém uma cópia local como fallback.
+  await salvarOcorrencias(ocorrenciasAtualizadas);
+
+  // Aplica novamente a priorização criada pela Duda.
+  const dadosPriorizados = await priorizarNoBackend(
+    ocorrenciasAtualizadas,
+  );
+
+  setListaOcorrencias(dadosPriorizados);
+} catch (erro) {
+  console.error("Erro ao atualizar status:", erro);
+
+  setErroSalvamento(
+    "Não foi possível salvar a alteração. O status foi mantido. Tente novamente.",
+  );
+} finally {
+  salvamentoEmCurso.current = false;
+  setSalvando(false);
+}
+};
+
+const ocorrencias = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
 
     return listaOcorrencias.filter(

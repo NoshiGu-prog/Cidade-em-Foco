@@ -79,3 +79,25 @@ export async function criarOcorrenciaApi(dados: NovaOcorrenciaApi) {
 
   return resposta.json();
 }
+
+export async function atualizarStatusOcorrenciaApi(
+  ocorrenciaId: string,
+  status: "ENVIADA" | "EM_ANALISE" | "EM_ANDAMENTO" | "RESOLVIDA",
+) {
+  const resposta = await fetch(
+    `${API_URL}/ocorrencias/${ocorrenciaId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    },
+  );
+
+  if (!resposta.ok) {
+    throw new Error("Não foi possível atualizar o status da ocorrência.");
+  }
+
+  return resposta.json();
+}
